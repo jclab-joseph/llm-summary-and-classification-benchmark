@@ -1,18 +1,18 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-16T03:23:30+00:00",
-  "run_id": "run-20260916T032329-e99b731d",
-  "status": "ABORTED",
+  "generated_at": "2026-09-16T04:51:21+00:00",
+  "run_id": "run-20260916T044051-1b0d71da",
+  "status": "COMPLETED",
   "api_provider": "openrouter",
   "model": {
     "model_id": "openai/gpt-5-nano",
     "display_name": "GPT-5 Nano",
     "vendor": "openai",
     "safe_slug": "openai__gpt-5-nano",
-    "max_output_tokens": 256,
+    "max_output_tokens": 4096,
     "reasoning": {
-      "enabled": false,
-      "effort": null,
+      "enabled": true,
+      "effort": "low",
       "max_tokens": null,
       "exclude": true
     },
@@ -47,21 +47,21 @@
   "cache": {
     "cache_hits": 0,
     "cache_misses": 1300,
-    "openrouter_api_calls": 16,
-    "openrouter_http_attempts": 16,
+    "openrouter_api_calls": 1300,
+    "openrouter_http_attempts": 1300,
     "metric_cache": {
       "hits": 0,
-      "misses": 0
+      "misses": 2500
     }
   },
   "usage": {
-    "prompt_tokens": 0,
-    "cached_tokens": 0,
+    "prompt_tokens": 1106945,
+    "cached_tokens": 40320,
     "cache_write_tokens": 0,
-    "completion_tokens": 0,
-    "reasoning_tokens": 0,
-    "total_tokens": 0,
-    "successful_cases": 0
+    "completion_tokens": 548399,
+    "reasoning_tokens": 433920,
+    "total_tokens": 1655344,
+    "successful_cases": 1300
   },
   "cost": {
     "pricing_snapshot": {
@@ -69,72 +69,64 @@
       "input_per_million": 0.05,
       "output_per_million": 0.4,
       "cached_input_per_million": 0.005,
-      "retrieved_at": "2026-09-16T03:23:28+00:00",
+      "retrieved_at": "2026-09-16T04:40:49+00:00",
       "source": "openrouter"
     },
     "authoritative_source": "openrouter usage.cost",
     "by_benchmark": {
-      "summarization": 0.0
+      "classification": 0.0474705,
+      "hallucination": 0.1433661,
+      "summarization": 0.08205585
     },
-    "summarization_cost": 0.0,
-    "hallucination_cost": 0.0,
-    "classification_cost": 0.0,
+    "summarization_cost": 0.08205585,
+    "hallucination_cost": 0.1433661,
+    "classification_cost": 0.0474705,
     "retry_error_cost": 0.0,
     "judge_cost": 0.0,
-    "total_openrouter_cost": 0.0,
-    "fresh_cost_this_run": 0.0,
-    "stored_benchmark_cost": 0.0,
-    "estimated_cost_without_cache": 0.0,
+    "total_openrouter_cost": 0.27289245,
+    "fresh_cost_this_run": 0.2728924500000001,
+    "stored_benchmark_cost": 0.27289245,
+    "estimated_cost_without_cache": 0.2728924500000001,
     "estimated_cache_savings": 0.0,
     "attempts": {
       "by_status": {
         "OPENROUTER_ERROR": {
           "count": 16,
           "usage_cost": 0.0
+        },
+        "SUCCESS": {
+          "count": 1300,
+          "usage_cost": 0.27289245
         }
       },
-      "success_attempts": 0,
-      "success_cost": 0.0,
+      "success_attempts": 1300,
+      "success_cost": 0.27289245,
       "error_attempts": 16,
       "error_cost": 0.0,
-      "total_attempts": 16,
-      "total_cost": 0.0
+      "total_attempts": 1316,
+      "total_cost": 0.27289245
     },
     "reconciliation": {
-      "recomputed_from_pricing_table": 0.0,
-      "actual_usage_cost": 0.0,
+      "recomputed_from_pricing_table": 0.27289245,
+      "actual_usage_cost": 0.27289245,
       "difference": 0.0,
       "relative_difference": 0.0,
       "matches_within_tolerance": true,
       "authoritative": "openrouter usage.cost"
     }
   },
-  "failures": {
-    "OPENROUTER_ERROR": 16
-  },
+  "failures": {},
   "failure_guard": {
     "enabled": true,
-    "tripped": true,
-    "reason": "10 consecutive failures (limit 10); aborting before the rest of the run",
-    "attempts": 16,
-    "failures": 16,
-    "failure_rate": 1.0,
-    "consecutive_failures": 16,
-    "status_counts": {
-      "OPENROUTER_ERROR": 16
-    },
-    "top_errors": [
-      {
-        "message": "Reasoning is mandatory for this endpoint and cannot be disabled.",
-        "count": 16
-      }
-    ],
-    "first_failure": {
-      "status": "OPENROUTER_ERROR",
-      "error": "Reasoning is mandatory for this endpoint and cannot be disabled.",
-      "http_status": 400,
-      "sample_id": "xlsum:en:47967764"
-    }
+    "tripped": false,
+    "reason": null,
+    "attempts": 1300,
+    "failures": 0,
+    "failure_rate": 0.0,
+    "consecutive_failures": 0,
+    "status_counts": {},
+    "top_errors": [],
+    "first_failure": null
   },
   "preflight": {
     "checked": true,
@@ -158,15 +150,11 @@
     "require_parameters": true
   },
   "skipped": {
-    "by_failure_guard": 1284,
+    "by_failure_guard": 0,
     "by_budget": 0
   },
-  "log_path": "/home/joseph/jcworkspace/llm-summary-and-classification-benchmark/data/logs/benchmark-20260916T025908.log",
-  "notes": [
-    "10 consecutive failures (limit 10); aborting before the rest of the run",
-    "[16x] Reasoning is mandatory for this endpoint and cannot be disabled.",
-    "Nothing was stored for the cases that were skipped, so a re-run picks them up normally once the cause is fixed."
-  ],
+  "log_path": "/home/joseph/jcworkspace/llm-summary-and-classification-benchmark/data/logs/benchmark-20260916T044049.log",
+  "notes": [],
   "metrics": {
     "summarization": {
       "benchmark": "summarization",
@@ -175,58 +163,115 @@
       "dataset_revision": "30fece425f9a3866e04321773ca7a80056d55ca6",
       "per_language": {
         "en": {
-          "cases": 16,
-          "scored_cases": 0,
-          "failed_cases": 16,
-          "rouge1_f": 0.0,
-          "rouge2_f": 0.0,
-          "rougeLsum_f": 0.0,
-          "chrf": 0.0,
+          "cases": 200,
+          "scored_cases": 200,
+          "failed_cases": 0,
+          "rouge1_f": 0.16725441928840848,
+          "rouge2_f": 0.03217330003838188,
+          "rougeLsum_f": 0.12990203655766433,
+          "chrf": 23.011385466672063,
           "bertscore_f1": null,
           "bertscore_scored_cases": 0,
-          "surface_fact_support_precision": null,
-          "compression_ratio": 0.0,
-          "output_tokens_mean": 0.0,
-          "output_chars_mean": 0.0,
+          "surface_fact_support_precision": 0.949200376293509,
+          "compression_ratio": 0.31655306027957575,
+          "output_tokens_mean": 126.435,
+          "output_chars_mean": 599.02,
           "empty_output_rate": 0.0,
           "refusal_rate": 0.0,
           "surface_fact_diagnostic": {
             "diagnostic": true,
             "note": "Surface-level check only; not a complete hallucination metric.",
-            "facts_total": 0,
-            "facts_supported": 0,
-            "surface_fact_support_precision": null,
-            "summaries_with_facts": 0,
-            "number_mismatch": 0,
-            "percentage_mismatch": 0,
-            "date_mismatch": 0,
-            "currency_mismatch": 0,
-            "unsupported_named_entity": 0,
+            "facts_total": 2126,
+            "facts_supported": 2018,
+            "surface_fact_support_precision": 0.949200376293509,
+            "summaries_with_facts": 200,
+            "number_mismatch": 9,
+            "percentage_mismatch": 1,
+            "date_mismatch": 1,
+            "currency_mismatch": 9,
+            "unsupported_named_entity": 88,
             "per_category": {
               "number": {
-                "total": 0,
-                "supported": 0,
-                "support_rate": null
+                "total": 304,
+                "supported": 295,
+                "support_rate": 0.9703947368421053
               },
               "percentage": {
-                "total": 0,
-                "supported": 0,
-                "support_rate": null
+                "total": 64,
+                "supported": 63,
+                "support_rate": 0.984375
               },
               "date": {
-                "total": 0,
-                "supported": 0,
-                "support_rate": null
+                "total": 154,
+                "supported": 153,
+                "support_rate": 0.9935064935064936
               },
               "currency": {
-                "total": 0,
-                "supported": 0,
-                "support_rate": null
+                "total": 83,
+                "supported": 74,
+                "support_rate": 0.891566265060241
               },
               "entity": {
-                "total": 0,
-                "supported": 0,
-                "support_rate": null
+                "total": 1521,
+                "supported": 1433,
+                "support_rate": 0.9421433267587114
+              }
+            }
+          }
+        },
+        "ko": {
+          "cases": 200,
+          "scored_cases": 200,
+          "failed_cases": 0,
+          "rouge1_f": 0.26052295408363757,
+          "rouge2_f": 0.1061640442440433,
+          "rougeLsum_f": 0.19928962652813426,
+          "chrf": 11.485223009505681,
+          "bertscore_f1": null,
+          "bertscore_scored_cases": 0,
+          "surface_fact_support_precision": 0.9549738219895288,
+          "compression_ratio": 0.18486327723024928,
+          "output_tokens_mean": 116.72,
+          "output_chars_mean": 240.52,
+          "empty_output_rate": 0.0,
+          "refusal_rate": 0.0,
+          "surface_fact_diagnostic": {
+            "diagnostic": true,
+            "note": "Surface-level check only; not a complete hallucination metric.",
+            "facts_total": 955,
+            "facts_supported": 912,
+            "surface_fact_support_precision": 0.9549738219895288,
+            "summaries_with_facts": 189,
+            "number_mismatch": 13,
+            "percentage_mismatch": 0,
+            "date_mismatch": 1,
+            "currency_mismatch": 2,
+            "unsupported_named_entity": 27,
+            "per_category": {
+              "number": {
+                "total": 533,
+                "supported": 520,
+                "support_rate": 0.975609756097561
+              },
+              "percentage": {
+                "total": 34,
+                "supported": 34,
+                "support_rate": 1.0
+              },
+              "date": {
+                "total": 124,
+                "supported": 123,
+                "support_rate": 0.9919354838709677
+              },
+              "currency": {
+                "total": 34,
+                "supported": 32,
+                "support_rate": 0.9411764705882353
+              },
+              "entity": {
+                "total": 230,
+                "supported": 203,
+                "support_rate": 0.8826086956521739
               }
             }
           }
@@ -271,7 +316,7 @@
           "model_type": "bert-base-multilingual-cased",
           "num_layers": 9,
           "version": "bertscore-1.0",
-          "unavailable_reason": null
+          "unavailable_reason": "bert-score is not installed; run `uv sync --extra bertscore` to enable it"
         }
       }
     },
@@ -284,14 +329,80 @@
       },
       "per_language": {
         "en": {
-          "cases": 0,
-          "status": "NO_RESULTS",
-          "documents": 0
+          "cases": 400,
+          "scored_cases": 400,
+          "failed_cases": 0,
+          "valid_outputs": 400,
+          "invalid_outputs": 0,
+          "invalid_output_rate": 0.0,
+          "accuracy": 0.6775,
+          "macro_f1": 0.6774496015002344,
+          "hallucination_precision": 0.6731707317073171,
+          "hallucination_recall": 0.69,
+          "hallucination_f1": 0.6814814814814814,
+          "supported_recall": 0.665,
+          "supported_precision": 0.6820512820512821,
+          "supported_f1": 0.6734177215189874,
+          "per_class": {
+            "SUPPORTED": {
+              "precision": 0.6820512820512821,
+              "recall": 0.665,
+              "f1": 0.6734177215189874,
+              "support": 200,
+              "tp": 133,
+              "fp": 62,
+              "fn": 67
+            },
+            "HALLUCINATED": {
+              "precision": 0.6731707317073171,
+              "recall": 0.69,
+              "f1": 0.6814814814814814,
+              "support": 200,
+              "tp": 138,
+              "fp": 67,
+              "fn": 62
+            }
+          },
+          "status": "OK",
+          "documents": 200
         },
         "ko": {
-          "cases": 0,
-          "status": "NO_RESULTS",
-          "documents": 0
+          "cases": 400,
+          "scored_cases": 400,
+          "failed_cases": 0,
+          "valid_outputs": 400,
+          "invalid_outputs": 0,
+          "invalid_output_rate": 0.0,
+          "accuracy": 0.57,
+          "macro_f1": 0.5059742647058822,
+          "hallucination_precision": 0.75,
+          "hallucination_recall": 0.21,
+          "hallucination_f1": 0.328125,
+          "supported_recall": 0.93,
+          "supported_precision": 0.5406976744186046,
+          "supported_f1": 0.6838235294117646,
+          "per_class": {
+            "SUPPORTED": {
+              "precision": 0.5406976744186046,
+              "recall": 0.93,
+              "f1": 0.6838235294117646,
+              "support": 200,
+              "tp": 186,
+              "fp": 158,
+              "fn": 14
+            },
+            "HALLUCINATED": {
+              "precision": 0.75,
+              "recall": 0.21,
+              "f1": 0.328125,
+              "support": 200,
+              "tp": 42,
+              "fp": 14,
+              "fn": 158
+            }
+          },
+          "status": "OK",
+          "documents": 200
         }
       },
       "evaluators": {
@@ -316,15 +427,48 @@
       "batch_size": 20,
       "per_language": {
         "en": {
-          "cases": 0
+          "cases": 1000,
+          "accuracy": 0.842,
+          "macro_f1": 0.8314865753296514,
+          "correct": 842,
+          "invalid_outputs": 0,
+          "invalid_output_rate": 0.0,
+          "failed_cases": 0,
+          "label_space_size": 60
         },
         "ko": {
-          "cases": 0
+          "cases": 1000,
+          "accuracy": 0.815,
+          "macro_f1": 0.8034449936517111,
+          "correct": 815,
+          "invalid_outputs": 0,
+          "invalid_output_rate": 0.0,
+          "failed_cases": 0,
+          "label_space_size": 60
         }
       },
-      "overall": {},
+      "overall": {
+        "cases": 2000,
+        "accuracy": 0.8285,
+        "macro_f1": 0.8179267929293625,
+        "correct": 1657,
+        "invalid_outputs": 0,
+        "invalid_output_rate": 0.0,
+        "failed_cases": 0,
+        "label_space_size": 60
+      },
       "cross_lingual": {
-        "paired_cases": 0
+        "paired_cases": 1000,
+        "prediction_agreement": 0.833,
+        "consistency": 0.863,
+        "both_correct": 760,
+        "both_correct_rate": 0.76,
+        "en_only_correct": 82,
+        "en_only_correct_rate": 0.082,
+        "ko_only_correct": 55,
+        "ko_only_correct_rate": 0.055,
+        "both_wrong": 103,
+        "both_wrong_rate": 0.103
       },
       "evaluators": {
         "classification_metrics": {
@@ -341,8 +485,8 @@
   "reproducibility": {
     "benchmark_package_version": "1.0.0",
     "benchmark_version": "1.0.0",
-    "git_commit": null,
-    "git_dirty": null,
+    "git_commit": "8d709c8d679a9226e30d04c8bb8a4757529688a6",
+    "git_dirty": false,
     "python_version": "3.12.3",
     "python_implementation": "CPython",
     "platform": "Linux-6.8.0-47-generic-x86_64-with-glibc2.39",
@@ -363,8 +507,8 @@
       "tenacity": "not-installed",
       "pyarrow": "25.0.1"
     },
-    "captured_at": "2026-09-16T03:23:29+00:00",
-    "executed_at": "2026-09-16T03:23:29+00:00",
+    "captured_at": "2026-09-16T04:40:51+00:00",
+    "executed_at": "2026-09-16T04:40:51+00:00",
     "api_provider": "openrouter",
     "model_id": "openai/gpt-5-nano",
     "requested_model": "openai/gpt-5-nano",
@@ -383,8 +527,8 @@
     },
     "routing_config_hash": "cbe6fb9c14d4b2b12e690d6565e05bcf861c5db26cc56aef45e3e3810f67b298",
     "reasoning_config": {
-      "enabled": false,
-      "effort": null,
+      "enabled": true,
+      "effort": "low",
       "max_tokens": null,
       "exclude": true
     },
@@ -471,7 +615,7 @@
       "input_per_million": 0.05,
       "output_per_million": 0.4,
       "cached_input_per_million": 0.005,
-      "retrieved_at": "2026-09-16T03:23:28+00:00",
+      "retrieved_at": "2026-09-16T04:40:49+00:00",
       "source": "openrouter"
     }
   }

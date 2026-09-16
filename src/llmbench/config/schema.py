@@ -19,12 +19,25 @@ class StrictModel(BaseModel):
 
 
 class ReasoningConfig(StrictModel):
-    """Reasoning/thinking configuration. Disabled by default for this benchmark."""
+    """Reasoning/thinking configuration. Disabled by default for this benchmark.
+
+    Some models refuse to run with thinking off ("Reasoning is mandatory for this
+    endpoint and cannot be disabled"). For those, enable it at the lowest effort
+    -- the spec asks for reasoning "disabled or minimized" -- and give the request
+    headroom, because reasoning tokens are counted against `max_tokens`. Without
+    headroom the hallucination benchmark's 8-token answer budget leaves the model
+    no room to think, and it returns nothing at all.
+    """
 
     enabled: bool = False
     effort: Literal["low", "medium", "high"] | None = None
     max_tokens: int | None = None
     exclude: bool = True  # do not stream reasoning back; we never score it
+    # Extra output tokens allowed on top of the answer budget when thinking is on.
+    output_token_headroom: int = 0
+    # Typical reasoning length, used only for the pre-run cost estimate. The
+    # headroom is a ceiling; billing follows what was actually generated.
+    estimated_output_tokens: int = 0
 
     def to_request_payload(self) -> dict[str, Any] | None:
         """OpenRouter `reasoning` request field, or None when disabled."""
@@ -39,6 +52,9 @@ class ReasoningConfig(StrictModel):
         return payload
 
     def cache_material(self) -> dict[str, Any]:
+        # `output_token_headroom` is deliberately absent: its only effect is on
+        # max_output_tokens, which the key already records. `estimated_output_tokens`
+        # never reaches the API at all.
         return {
             "enabled": self.enabled,
             "effort": self.effort,
@@ -175,6 +191,24 @@ class ModelConfig(StrictModel):
 
     def supports(self, parameter: str) -> bool:
         return bool(getattr(self.parameters, parameter, True))
+
+    def output_token_budget(self, answer_tokens: int) -> int:
+        """`max_tokens` to send for a request whose answer should fit in ``answer_tokens``.
+
+        Reasoning tokens count against the same budget, so a thinking model gets
+        the configured headroom on top. ``max_output_tokens`` is the hard ceiling.
+        """
+        budget = answer_tokens
+        if self.reasoning.enabled:
+            budget += self.reasoning.output_token_headroom
+        return min(budget, self.max_output_tokens)
+
+    def estimated_output_tokens(self, answer_tokens: int) -> int:
+        """Expected output length, for the pre-run cost estimate only."""
+        estimate = answer_tokens
+        if self.reasoning.enabled:
+            estimate += self.reasoning.estimated_output_tokens
+        return min(estimate, self.output_token_budget(answer_tokens))
 
     def capability_mismatches(self, supported_parameters: list[str]) -> list[dict[str, Any]]:
         """Compare the configured flags against OpenRouter's live metadata.

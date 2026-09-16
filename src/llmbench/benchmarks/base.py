@@ -70,7 +70,7 @@ def make_task(
     split: str,
     sample_content_hash: str,
     prompt: RenderedPrompt,
-    max_output_tokens: int,
+    answer_tokens: int,
     response_format: dict[str, Any] | None = None,
     alias_resolution: str | None = None,
     meta: dict[str, Any] | None = None,
@@ -81,6 +81,8 @@ def make_task(
     between benchmarks.
     """
     generation = cfg.benchmark.generation
+    # A thinking model needs room for reasoning tokens on top of the answer.
+    max_output_tokens = model.output_token_budget(answer_tokens)
     # Parameters the model does not accept are omitted from the request, so they
     # are omitted from the key material too.
     temperature = generation.temperature if model.supports("temperature") else None
@@ -125,7 +127,7 @@ def make_task(
         cache_key=cache_key,
         key_material=material.to_dict(),
         est_input_tokens=estimate_tokens(prompt.system) + estimate_tokens(prompt.user) + 8,
-        est_output_tokens=max_output_tokens,
+        est_output_tokens=model.estimated_output_tokens(answer_tokens),
         response_format=response_format,
         meta=meta or {},
     )

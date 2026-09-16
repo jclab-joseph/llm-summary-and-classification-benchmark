@@ -32,7 +32,7 @@ def build_summarization_tasks(
     alias_resolution: str | None = None,
 ) -> TaskGroup:
     bench = cfg.benchmark.benchmarks.summarization
-    max_tokens = cfg.benchmark.generation.max_output_tokens.summarization
+    answer_tokens = cfg.benchmark.generation.max_output_tokens.summarization
     wanted = set(languages) if languages else None
 
     tasks: list[Task] = []
@@ -53,7 +53,7 @@ def build_summarization_tasks(
                 split=record.split,
                 sample_content_hash=record.source_hash,
                 prompt=prompt,
-                max_output_tokens=max_tokens,
+                answer_tokens=answer_tokens,
                 alias_resolution=alias_resolution,
                 meta={"reference_hash": record.reference_hash},
             )

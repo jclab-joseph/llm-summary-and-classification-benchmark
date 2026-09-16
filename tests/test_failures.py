@@ -256,3 +256,121 @@ def test_prune_logs_keeps_the_newest(tmp_path: Path):
     remaining = sorted(p.name for p in tmp_path.glob("benchmark-*.log"))
     assert remaining == ["benchmark-20250102T000000.log", "benchmark-20250103T000000.log"]
     assert (tmp_path / "unrelated.txt").exists()
+
+
+# --------------------------------------------------------------------------- #
+# output token budget (reasoning headroom)
+# --------------------------------------------------------------------------- #
+def test_headroom_only_applies_when_reasoning_is_enabled(prepared):
+    model = prepared.require_model(MODEL)
+    model.reasoning.output_token_headroom = 2048
+    model.max_output_tokens = 4096
+
+    model.reasoning.enabled = False
+    assert model.output_token_budget(8) == 8
+    assert model.output_token_budget(200) == 200
+
+    model.reasoning.enabled = True
+    # An 8-token answer budget leaves a thinking model no room to think.
+    assert model.output_token_budget(8) == 2056
+    assert model.output_token_budget(200) == 2248
+
+
+def test_output_budget_respects_the_model_ceiling(prepared):
+    model = prepared.require_model(MODEL)
+    model.reasoning.enabled = True
+    model.reasoning.output_token_headroom = 10_000
+    model.max_output_tokens = 512
+    assert model.output_token_budget(200) == 512
+
+
+def test_estimate_uses_typical_reasoning_length_not_the_ceiling(prepared):
+    """The headroom is a cap; billing follows what was generated."""
+    model = prepared.require_model(MODEL)
+    model.reasoning.enabled = True
+    model.reasoning.output_token_headroom = 2048
+    model.reasoning.estimated_output_tokens = 256
+    model.max_output_tokens = 4096
+
+    assert model.estimated_output_tokens(200) == 456
+    assert model.estimated_output_tokens(200) < model.output_token_budget(200)
+
+
+def test_raising_the_ceiling_above_the_answer_budget_keeps_cache_keys(prepared):
+    """Regression: making max_output_tokens meaningful must not re-bill past runs."""
+    from llmbench.benchmarks.classification import build_classification_tasks
+    from llmbench.datasets.manifest import read_manifest
+
+    manifest = read_manifest(
+        prepared.manifest_dir / prepared.benchmark.benchmarks.classification.manifest
+    )
+    model = prepared.require_model(MODEL)
+    answer_budget = prepared.benchmark.generation.max_output_tokens.classification
+
+    model.max_output_tokens = answer_budget + 1
+    before = [t.cache_key for t in build_classification_tasks(prepared, model, manifest).tasks]
+    model.max_output_tokens = 100_000
+    after = [t.cache_key for t in build_classification_tasks(prepared, model, manifest).tasks]
+    assert before == after
+
+    # Clipping the answer budget IS a different request, so the key must change.
+    model.max_output_tokens = answer_budget - 1
+    assert [t.cache_key for t in build_classification_tasks(prepared, model, manifest).tasks] != before
+
+
+def test_reasoning_headroom_changes_the_cache_key(prepared):
+    from llmbench.benchmarks.summarization import build_summarization_tasks
+    from llmbench.datasets.manifest import read_manifest
+
+    manifest = read_manifest(
+        prepared.manifest_dir / prepared.benchmark.benchmarks.summarization.manifest
+    )
+    model = prepared.require_model(MODEL)
+    model.max_output_tokens = 4096
+    model.reasoning.enabled = True
+    before = [t.cache_key for t in build_summarization_tasks(prepared, model, manifest).tasks]
+    model.reasoning.output_token_headroom = 2048
+    assert [t.cache_key for t in build_summarization_tasks(prepared, model, manifest).tasks] != before
+
+
+# --------------------------------------------------------------------------- #
+# models whose thinking cannot be turned off
+# --------------------------------------------------------------------------- #
+def test_mandatory_reasoning_models_are_configured(prepared):
+    """These two endpoints reject `reasoning.enabled: false` outright."""
+    for slug in ("openai/gpt-5-nano", "z-ai/glm-5.3-flash"):
+        model = prepared.require_model(slug)
+        assert model.reasoning.enabled is True, slug
+        assert model.reasoning.effort == "low", slug
+        assert model.reasoning.output_token_headroom > 0, slug
+        # The hallucination answer budget is 8 tokens; without headroom there is
+        # no room left to think and the model returns nothing.
+        assert model.output_token_budget(8) > 1000, slug
+
+
+async def test_mandatory_reasoning_model_runs(prepared, store, client_factory, mock_openrouter):
+    mock_openrouter.reasoning_mandatory = {"openai/gpt-5-nano"}
+    runner = BenchmarkRunner(prepared, store, client_factory=lambda: client_factory())
+
+    outcome = await runner.run(prepared.require_model("openai/gpt-5-nano"), benchmarks=["summarization"])
+
+    assert outcome.status == "COMPLETED"
+    assert not outcome.failures
+    assert all(payload["reasoning"]["enabled"] for payload in mock_openrouter.requests)
+    assert all(payload["max_tokens"] > 200 for payload in mock_openrouter.requests)
+
+
+async def test_disabling_reasoning_on_such_a_model_aborts_fast(prepared, store, client_factory, mock_openrouter):
+    """The failure this reproduces: 10 requests, then stop -- not 1,300."""
+    mock_openrouter.reasoning_mandatory = {"openai/gpt-5-nano"}
+    prepared.benchmark.failure_guard.max_consecutive_failures = 3
+    prepared.benchmark.concurrency.max_parallel_requests = 1
+    model = prepared.require_model("openai/gpt-5-nano")
+    model.reasoning.enabled = False
+
+    runner = BenchmarkRunner(prepared, store, client_factory=lambda: client_factory())
+    outcome = await runner.run(model, benchmarks=["summarization"])
+
+    assert outcome.status == "ABORTED"
+    assert "Reasoning is mandatory" in outcome.failure_summary["top_errors"][0]["message"]
+    assert outcome.api_calls <= 4

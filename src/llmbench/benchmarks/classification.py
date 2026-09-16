@@ -43,7 +43,7 @@ def build_classification_tasks(
     alias_resolution: str | None = None,
 ) -> TaskGroup:
     bench = cfg.benchmark.benchmarks.classification
-    max_tokens = cfg.benchmark.generation.max_output_tokens.classification
+    answer_tokens = cfg.benchmark.generation.max_output_tokens.classification
     wanted = set(languages) if languages else None
     labels = label_space_of(manifest)
 
@@ -67,7 +67,7 @@ def build_classification_tasks(
                     split=manifest.meta.split,
                     sample_content_hash=hash_obj([r.source_hash for r in batch]),
                     prompt=prompt,
-                    max_output_tokens=max_tokens,
+                    answer_tokens=answer_tokens,
                     alias_resolution=alias_resolution,
                     meta={
                         "batch_index": batch_index,

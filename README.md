@@ -191,6 +191,11 @@ HTTP 404 `No endpoints found that can handle the requested parameters` 가 돌�
 빠진 파라미터는 cache key에서도 빠집니다. cache key는 "실제로 무엇을 요청했는가" 를 기술해야
 하기 때문입니다.
 
+일부 제약은 메타데이터에 드러나지 않습니다. 예를 들어 thinking 을 끌 수 없는 모델은
+`supported_parameters` 만으로는 구분되지 않고, 실행해 봐야 400 이 돌아옵니다. 이런 런타임
+제약은 사전 검사가 아니라 circuit breaker 가 잡습니다.
+[문제 해결](#reasoning-is-mandatory-for-this-endpoint-and-cannot-be-disabled) 참고.
+
 설정이 OpenRouter의 현재 메타데이터와 맞는지 확인하려면:
 
 ```bash
@@ -717,22 +722,37 @@ benchmark models --check
 
 ### `Reasoning is mandatory for this endpoint and cannot be disabled`
 
-일부 모델은 thinking 을 끌 수 없습니다. 기본 설정은 `reasoning.enabled: false` 이므로
-이런 모델은 모든 요청이 실패하고, circuit breaker 가 10회 만에 중단시킵니다.
+일부 모델은 thinking 을 끌 수 없습니다. 기본값이 `reasoning.enabled: false` 이므로 이런 모델은
+모든 요청이 400 으로 실패하고, circuit breaker 가 10회 만에 중단시킵니다.
 
-해당 모델만 thinking 을 켜되 가장 낮은 강도로 두세요.
+해당 모델만 thinking 을 켜되 가장 낮은 강도로 두고, **출력 여유분을 주세요.**
 
 ```yaml
 - model_id: openai/gpt-5-nano
+  max_output_tokens: 4096
   reasoning:
     enabled: true
-    effort: low      # 명세의 "disabled 또는 최소화" 중 최소화 쪽
+    effort: low                    # 명세의 "disabled 또는 최소화" 중 최소화 쪽
+    output_token_headroom: 2048    # reasoning token 은 max_tokens 에 함께 계산됨
+    estimated_output_tokens: 256   # 비용 추정 전용 (headroom 은 상한일 뿐)
 ```
 
-**이건 비교 조건이 달라지는 변경입니다.** thinking 을 켠 모델은 reasoning token 이
-추가로 과금되고 출력 특성도 달라지므로, 결과를 읽을 때 그 모델만 조건이 다르다는 점을
-염두에 두세요. `summary.json` 의 `reproducibility.reasoning_config` 에 기록됩니다.
+`output_token_headroom` 이 핵심입니다. 환각 벤치마크의 답변 예산은 **8 토큰** 이라,
+여유분이 없으면 모델이 생각할 공간 자체가 없어 빈 응답이 나옵니다. 실측에서
+`openai/gpt-5-nano` 는 환각 케이스 하나에 reasoning 만 384 토큰을 썼습니다.
 
+`openai/gpt-5-nano` 와 `z-ai/glm-5.3-flash` 는 이미 이렇게 설정돼 있습니다.
+
+**알아둘 점 두 가지입니다.**
+
+- **비교 조건이 달라집니다.** thinking 을 켠 모델은 reasoning token 이 추가 과금되고
+  출력 특성도 달라집니다. `summary.json` 의 `reproducibility.reasoning_config` 와
+  리포트의 `Reasoning Tokens` 열에 기록됩니다.
+- **출력 길이 상한도 달라집니다.** 비추론 모델은 요약에서 200 토큰에서 잘리지만, 여유분을
+  받은 모델은 상한이 훨씬 높습니다. 프롬프트가 1~3문장을 지시하므로 실제 길이는 비슷하지만,
+  길이 상한이 동일하지 않다는 점은 감안하세요.
+
+### 실행이 `ABORTED` 로 끝났다
 ### 실행이 `ABORTED` 로 끝났다
 
 circuit breaker가 동작한 것입니다. 콘솔의 에러 메시지 표와 `data/logs/` 의 로그 파일을 보세요.

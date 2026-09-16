@@ -66,6 +66,9 @@ class MockOpenRouter:
 
     fail_first_n: int = 0
     fail_status: int = 429
+    # Models that refuse to run with thinking disabled, like the real
+    # openai/gpt-5-nano and z-ai/glm-5.3-flash endpoints.
+    reasoning_mandatory: set[str] = field(default_factory=set)
     fail_cost: float | None = None
     error_for_sample: dict[str, int] = field(default_factory=dict)
     chat_calls: int = 0
@@ -147,6 +150,19 @@ class MockOpenRouter:
                 }
                 self.total_cost += self.fail_cost
             return httpx.Response(self.fail_status, json=body)
+
+        if payload["model"] in self.reasoning_mandatory:
+            reasoning = payload.get("reasoning") or {}
+            if not reasoning.get("enabled"):
+                return httpx.Response(
+                    400,
+                    json={
+                        "error": {
+                            "message": "Reasoning is mandatory for this endpoint and cannot be disabled.",
+                            "code": 400,
+                        }
+                    },
+                )
 
         messages = payload["messages"]
         user = next(m["content"] for m in messages if m["role"] == "user")

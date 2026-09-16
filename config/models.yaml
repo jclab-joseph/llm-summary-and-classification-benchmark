@@ -10,7 +10,7 @@ version: 1
 defaults:
   provider: openrouter
   enabled: true
-  max_output_tokens: 256
+  max_output_tokens: 1024
   reasoning:
     enabled: false      # thinking disabled for the default benchmark
     effort: null        # "low" | "medium" | "high" (only when enabled)
@@ -44,7 +44,7 @@ models:
     display_name: GPT-5.6 Luna
     vendor: openai
     enabled: true
-    max_output_tokens: 256
+    max_output_tokens: 1024
     reasoning:
       enabled: false
     parameters:
@@ -60,7 +60,7 @@ models:
     display_name: Gemini 3.1 Flash-Lite
     vendor: google
     enabled: true
-    max_output_tokens: 256
+    max_output_tokens: 1024
     reasoning:
       enabled: false
     routing:
@@ -72,7 +72,7 @@ models:
     display_name: Gemini 2.5 Flash-Lite
     vendor: google
     enabled: true
-    max_output_tokens: 256
+    max_output_tokens: 1024
     reasoning:
       enabled: false
     routing:
@@ -84,7 +84,7 @@ models:
     display_name: Mistral Small 4
     vendor: mistralai
     enabled: true
-    max_output_tokens: 256
+    max_output_tokens: 1024
     reasoning:
       enabled: false
     routing:
@@ -96,7 +96,7 @@ models:
     display_name: Ministral 3 14B
     vendor: mistralai
     enabled: true
-    max_output_tokens: 256
+    max_output_tokens: 1024
     reasoning:
       enabled: false
     parameters:
@@ -110,7 +110,7 @@ models:
     display_name: Ministral 3 8B
     vendor: mistralai
     enabled: true
-    max_output_tokens: 256
+    max_output_tokens: 1024
     reasoning:
       enabled: false
     parameters:
@@ -124,7 +124,7 @@ models:
     display_name: Ministral 3 3B
     vendor: mistralai
     enabled: true
-    max_output_tokens: 256
+    max_output_tokens: 1024
     reasoning:
       enabled: false
     parameters:
@@ -138,7 +138,7 @@ models:
     display_name: GPT-5.4 Nano
     vendor: openai
     enabled: true
-    max_output_tokens: 256
+    max_output_tokens: 1024
     reasoning:
       enabled: false
     parameters:
@@ -154,9 +154,16 @@ models:
     display_name: GPT-5 Nano
     vendor: openai
     enabled: true
-    max_output_tokens: 256
+    # This endpoint refuses to run with thinking disabled ("Reasoning is
+    # mandatory for this endpoint and cannot be disabled"), so it runs at the
+    # lowest effort instead. Reasoning tokens count against max_tokens, hence the
+    # headroom and the raised ceiling.
+    max_output_tokens: 4096
     reasoning:
-      enabled: false
+      enabled: true
+      effort: low
+      output_token_headroom: 2048
+      estimated_output_tokens: 256
     parameters:
       temperature: false   # OpenRouter reports no temperature support
       top_p: false
@@ -170,7 +177,7 @@ models:
     display_name: GPT-4.1 Nano
     vendor: openai
     enabled: true
-    max_output_tokens: 256
+    max_output_tokens: 1024
     reasoning:
       enabled: false
     parameters:
@@ -185,7 +192,7 @@ models:
     display_name: Qwen3.8 Flash
     vendor: qwen
     enabled: true
-    max_output_tokens: 256
+    max_output_tokens: 1024
     reasoning:
       enabled: false
     routing:
@@ -197,7 +204,7 @@ models:
     display_name: Qwen3.7 Flash
     vendor: qwen
     enabled: true
-    max_output_tokens: 256
+    max_output_tokens: 1024
     reasoning:
       enabled: false
     parameters:
@@ -211,7 +218,7 @@ models:
     display_name: Qwen3 30B A3B Instruct 2507
     vendor: qwen
     enabled: true
-    max_output_tokens: 256
+    max_output_tokens: 1024
     reasoning:
       enabled: false
     parameters:
@@ -225,9 +232,16 @@ models:
     display_name: GLM 5.3 Flash
     vendor: z-ai
     enabled: true
-    max_output_tokens: 256
+    # This endpoint refuses to run with thinking disabled ("Reasoning is
+    # mandatory for this endpoint and cannot be disabled"), so it runs at the
+    # lowest effort instead. Reasoning tokens count against max_tokens, hence the
+    # headroom and the raised ceiling.
+    max_output_tokens: 4096
     reasoning:
-      enabled: false
+      enabled: true
+      effort: low
+      output_token_headroom: 2048
+      estimated_output_tokens: 256
     routing:
       mode: default
       provider_order: null
@@ -237,7 +251,7 @@ models:
     display_name: DeepSeek V4 Flash 0731
     vendor: deepseek
     enabled: true
-    max_output_tokens: 256
+    max_output_tokens: 1024
     reasoning:
       enabled: false
     routing:
@@ -253,7 +267,7 @@ judges:
     vendor: openai
     role: cheap
     enabled: false
-    max_output_tokens: 512
+    max_output_tokens: 1024
     reasoning:
       enabled: false
     parameters:
@@ -270,7 +284,7 @@ judges:
     vendor: openai
     role: strong
     enabled: false
-    max_output_tokens: 512
+    max_output_tokens: 1024
     reasoning:
       enabled: false
     parameters:

@@ -211,7 +211,7 @@ class JudgeRunner:
                 user_prompt=prompt.user,
                 temperature=judge_temperature,
                 top_p=judge_top_p,
-                max_output_tokens=generation.max_output_tokens,
+                max_output_tokens=judge_model.output_token_budget(generation.max_output_tokens),
                 reasoning=judge_reasoning,
                 structured_output_schema_version=self.cfg.benchmark.structured_output.version,
             )
@@ -228,7 +228,7 @@ class JudgeRunner:
                     GenerationRequest(
                         model=judge_model.model_id,
                         messages=prompt.messages,
-                        max_tokens=generation.max_output_tokens,
+                        max_tokens=judge_model.output_token_budget(generation.max_output_tokens),
                         temperature=(
                             generation.temperature if judge_model.supports("temperature") else None
                         ),

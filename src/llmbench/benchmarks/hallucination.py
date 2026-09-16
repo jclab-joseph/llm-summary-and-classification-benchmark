@@ -30,7 +30,7 @@ def build_hallucination_tasks(
 ) -> TaskGroup:
     """``manifests`` maps language -> manifest (None when the source is unavailable)."""
     bench = cfg.benchmark.benchmarks.hallucination
-    max_tokens = cfg.benchmark.generation.max_output_tokens.hallucination
+    answer_tokens = cfg.benchmark.generation.max_output_tokens.hallucination
     wanted = set(languages) if languages else None
 
     tasks: list[Task] = []
@@ -66,7 +66,7 @@ def build_hallucination_tasks(
                         }
                     ),
                     prompt=prompt,
-                    max_output_tokens=max_tokens,
+                    answer_tokens=answer_tokens,
                     alias_resolution=alias_resolution,
                     meta={"gold_label": record.payload["gold_label"]},
                 )

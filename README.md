@@ -33,26 +33,121 @@ benchmark report
 
 ## 무엇을 측정하는가
 
-| 벤치마크 | 데이터셋 | 케이스 | 요청 수 |
-|---|---|---:|---:|
-| 요약 | XL-Sum (`csebuetnlp/xlsum`) | EN 200 + KO 200 | 400 |
-| 요약 환각 | HaluEval summarization (EN) + AI-Hub 추상 요약 사실성 검증 (KO, [수동 준비](#ai-hub-한국어-사실성-데이터-수동-준비)) | EN 400 + KO 400 | 800 |
-| 분류 | MASSIVE intents (`mteb/amazon_massive_intent`) | EN 1,000 + KO 1,000 | 100 (20개씩 배치) |
+세 가지 능력을 **영어와 한국어에서 각각** 측정합니다. 모델 하나당 3,200 케이스,
+OpenRouter 요청 1,300건입니다.
 
-**요약**은 ROUGE-Lsum, chrF++, multilingual BERTScore F1, compression ratio, 출력 길이,
-empty output rate, refusal rate로 채점합니다. EN과 KO는 항상 따로 보고하며 절대 평균 내지 않습니다.
+| 벤치마크 | 데이터셋 | 과제 | 케이스 | 요청 수 |
+|---|---|---|---:|---:|
+| [요약](#1-요약-summarization) | XL-Sum (`csebuetnlp/xlsum`) | 뉴스 기사를 1~3문장으로 요약 | EN 200 + KO 200 | 400 |
+| [요약 환각 탐지](#2-요약-환각-탐지-hallucination-detection) | HaluEval (EN) + AI-Hub 추상 요약 사실성 검증 (KO, [수동 준비](#ai-hub-한국어-사실성-데이터-수동-준비)) | 요약이 원문에 뒷받침되는지 판정 | EN 400 + KO 400 | 800 |
+| [분류](#3-분류-classification) | MASSIVE (`mteb/amazon_massive_intent`) | 발화를 60개 인텐트 중 하나로 분류 | EN 1,000 + KO 1,000 | 100 |
 
-**요약 환각**은 `SUPPORTED` / `HALLUCINATED` 이진 판정이며 accuracy, macro-F1,
-hallucination precision/recall/F1, supported recall, invalid output rate를 냅니다.
+세 벤치마크 모두 **frozen manifest** 를 씁니다. 모든 모델이 같은 샘플을, 같은 전처리로,
+같은 프롬프트로 받습니다.
 
-**분류**는 MASSIVE semantic id를 공유하는 EN/KO 쌍에 대한 60-intent 분류이며 accuracy,
-macro-F1, 그리고 cross-lingual consistency(both correct / EN only / KO only / both wrong)를 냅니다.
+아래 지표 표의 방향 표기는 **↑ 높을수록 좋음 · ↓ 낮을수록 좋음 · — 좋고 나쁨이 아니라 해석용**
+입니다. 같은 설명이 `RESULT.md` 의 각 표 아래와 스프레드시트의 `Legend` 시트에도 들어갑니다.
 
-여기에 생성된 요약에 대한 **surface fact support 진단 지표**가 추가됩니다. 무엇이고 무엇이
-아닌지는 [결과 읽는 법](#결과-읽는-법)을 참고하세요.
+### 1. 요약 (Summarization)
 
-위 숫자 중 어느 것도 LLM-as-a-Judge를 쓰지 않습니다. Judge는 제공되지만 기본 비활성이고
-보조 지표입니다. [LLM-as-a-Judge (선택)](#llm-as-a-judge-선택) 참고.
+BBC 뉴스 기사(XL-Sum)를 1~3문장으로 요약시키고, 기사에 딸린 **사람이 쓴 참조 요약**과 비교합니다.
+원문은 약 1,800토큰으로 잘라 모든 모델에 동일하게 제공하고, 출력은 200토큰까지 받습니다.
+
+| 지표 | 방향 | 의미 |
+|---|:--:|---|
+| ROUGE-Lsum | ↑ | 참조 요약과의 최장 공통 부분열 기반 F1 (0~1). 문장 단위로 계산합니다. |
+| chrF++ | ↑ | 문자 n-gram + 단어 bigram F-score (0~100). 어형 변화에 강해 한국어에 비교적 공정합니다. |
+| BERTScore F1 | ↑ | 다국어 임베딩 기반 의미 유사도 (0~1). 표현이 달라도 뜻이 같으면 점수를 줍니다. [선택 설치](#1-설치). |
+| Surface fact support | ↑ | 아래 [진단 지표](#부가-surface-fact-support-진단) 참고. |
+| Compression ratio | — | 출력 길이 ÷ 원문 길이. 낮으면 압축적, 높으면 장황. **낮다고 무조건 좋은 것은 아닙니다.** |
+| 출력 길이 | — | 평균 출력 토큰 수(추정). |
+| Empty output rate | ↓ | 빈 출력 비율. |
+| Refusal rate | ↓ | 거부 응답 비율. |
+
+빈 출력과 거부는 **분모에서 빼지 않습니다.** 5분의 1을 거부하는 모델이 나머지만으로 높은
+점수를 받는 일이 없도록 하기 위해서입니다.
+
+요약은 정답이 하나가 아니라서 ROUGE 절대값 자체는 낮게 나옵니다(0.15~0.25 수준이 정상).
+**모델 간 상대 비교**로 읽으세요.
+
+### 2. 요약 환각 탐지 (Hallucination detection)
+
+원문과 후보 요약을 함께 주고, 요약의 모든 사실적 주장이 원문에 의해 뒷받침되는지
+`SUPPORTED` / `HALLUCINATED` 중 하나로 답하게 합니다. 출력은 8토큰이면 충분합니다.
+
+문서 하나에서 두 케이스가 나옵니다. 충실한 요약(`SUPPORTED`)과 오류가 있는 요약
+(`HALLUCINATED`)이라 레이블이 정확히 반반이고, 따라서 **무작위 추측의 정확도는 0.5** 입니다.
+
+| 지표 | 방향 | 의미 |
+|---|:--:|---|
+| Accuracy | ↑ | 전체 정답률 (0~1). 0.5가 무작위 수준. |
+| Macro-F1 | ↑ | 두 레이블 F1의 단순 평균. 한쪽 레이블만 찍는 모델을 걸러냅니다. |
+| Hallucination Precision | ↑ | HALLUCINATED 라고 답한 것 중 실제로 맞은 비율. 낮으면 멀쩡한 요약을 환각이라고 의심. |
+| Hallucination Recall | ↑ | 실제 HALLUCINATED 중 잡아낸 비율. 낮으면 환각을 놓침. |
+| Hallucination F1 | ↑ | 위 둘의 조화평균. 이 벤치마크의 대표값입니다. |
+| Supported Recall | ↑ | 실제 SUPPORTED 를 맞힌 비율. **이 값만 낮으면 과도하게 의심하는 모델**입니다. |
+| Invalid output rate | ↓ | 레이블로 파싱할 수 없는 출력 비율. 오답으로 계산됩니다. |
+
+Precision 과 Recall 을 같이 보셔야 합니다. 전부 `HALLUCINATED` 라고 답하면 Recall 은 1.0 이지만
+Supported Recall 이 0 이 되고 Macro-F1 이 무너집니다.
+
+> **EN 과 KO 는 직접 비교하지 마세요.** 영어(HaluEval)는 LLM 이 올바른 요약을 일부러 망가뜨린
+> 것이고, 한국어(AI-Hub)는 사람이 실제 기계 요약을 교정한 것입니다. 한국어 쪽
+> `HALLUCINATED` 후보는 실제 모델 출력이라 불충실할 뿐 아니라 비문인 경우가 많습니다.
+> 언어별 열 안에서 모델끼리 비교하세요.
+
+### 3. 분류 (Classification)
+
+MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다. 비용 절감을 위해 **20건씩 묶어**
+한 요청으로 보내고 `<발화 번호>: <인텐트 번호>` 형식으로 답하게 합니다.
+**무작위 추측의 정확도는 1/60 ≈ 0.017** 입니다.
+
+| 지표 | 방향 | 의미 |
+|---|:--:|---|
+| Accuracy | ↑ | 정답률 (0~1). |
+| Macro-F1 | ↑ | 60개 인텐트별 F1의 평균. 드문 인텐트를 무시하는 모델에 불리하게 작동합니다. |
+| Invalid output rate | ↓ | 배치 형식을 못 지켜 답을 읽지 못한 비율. 오답으로 계산됩니다. |
+
+EN/KO 쌍은 **같은 semantic id** 를 공유합니다. 뜻이 같은 발화를 두 언어로 물어본 것이라,
+두 언어 사이의 편차를 직접 볼 수 있습니다.
+
+| 지표 | 방향 | 의미 |
+|---|:--:|---|
+| Cross-lingual consistency | ↑ | 두 언어에서 정오답이 일치한 비율(둘 다 맞음 + 둘 다 틀림). |
+| Prediction agreement | ↑ | 정답 여부와 무관하게 **같은 인텐트** 를 예측한 비율. 정확도와 분리된 안정성 지표. |
+| Both correct | ↑ | 두 언어 모두 맞힘. |
+| EN only correct | ↓ | 영어만 맞힘 = 한국어가 약함. |
+| KO only correct | ↓ | 한국어만 맞힘 = 영어가 약함. |
+| Both wrong | ↓ | 두 언어 모두 틀림. |
+
+Consistency 는 **둘 다 틀린 경우도 "일관됨"으로 셉니다.** 정확도가 낮은 모델이 높은
+consistency 를 받을 수 있으므로 반드시 Accuracy 와 함께 보세요.
+
+### 부가: Surface fact support (진단)
+
+생성된 요약에서 숫자·백분율·날짜·통화·개체명을 **규칙 기반으로** 추출해 원문과 대조합니다.
+LLM 을 쓰지 않는 결정적 계산입니다.
+
+```
+surface_fact_support_precision = 뒷받침되는 추출 사실 / 전체 추출 사실
+```
+
+명세의 예시대로 원문 `매출은 12% 증가` → 요약 `매출은 21% 증가` 를 잡아내고,
+`number` / `percentage` / `date` / `currency` / `unsupported entity` 로 나눠 집계합니다.
+
+**이것은 진단 지표이지 환각 지표가 아닙니다.** 의미 수준의 왜곡("부인했다" vs "확인했다")과
+누락은 보지 못하고, 개체명 후보는 정밀도 위주로 적게 뽑습니다. 점수가 깨끗하다고 충실한
+요약이라는 뜻이 아닙니다.
+
+### 공통 규칙
+
+- **파싱 불가 출력은 오답입니다.** 분모에서 빼지 않고 `invalid_output_rate` 로 따로 보고합니다.
+  형식을 못 지키는 것도 모델의 능력입니다.
+- **EN 과 KO 는 항상 따로 보고합니다.** 평균 내지 않습니다.
+- **성격이 다른 지표를 하나의 종합 점수로 합치지 않습니다.** 요약 ROUGE 와 분류 정확도는
+  같은 축이 아닙니다.
+- 위 숫자 중 **어느 것도 LLM-as-a-Judge 를 쓰지 않습니다.** Judge 는 제공되지만 기본 비활성이고
+  보조 지표입니다. [LLM-as-a-Judge (선택)](#llm-as-a-judge-선택) 참고.
 
 ---
 
@@ -668,41 +763,32 @@ BERTScore, chrF++, surface fact support, compression ratio, 환각 accuracy/macr
 
 ### 숫자를 인용하기 전에 알아둘 것
 
-**성격이 다른 지표를 하나의 composite score로 합치지 않습니다.** 요약 ROUGE와 intent 분류
-accuracy는 같은 축이 아니며, 평균을 내면 이 벤치마크가 드러내려는 트레이드오프가 가려집니다.
-
-**Surface fact support는 진단 지표이지 환각 지표가 아닙니다.** 생성된 요약에서 숫자, 백분율,
-날짜, 통화 금액, 정밀도 높은 개체명 후보를 뽑아 정규화 후 원문과 대조합니다.
-
-```
-surface_fact_support_precision = 뒷받침되는 추출 사실 / 전체 추출 사실
-```
-
-명세가 든 예시(원문 12%, 요약 21%)를 잡아내며 `number_mismatch`, `percentage_mismatch`,
-`date_mismatch`, `currency_mismatch`, `unsupported_named_entity` 를 따로 집계합니다. 다만
-의미 수준의 불충실("부인했다" vs "확인했다")은 보지 못하고, 누락도 보지 못하며, 개체명 후보는
-의도적으로 고정밀·저재현으로 뽑습니다. 점수가 깨끗하다고 해서 충실한 요약이라는 뜻은 아닙니다.
+각 지표가 무엇이고 어느 방향이 좋은지는 [무엇을 측정하는가](#무엇을-측정하는가)에 정리돼
+있습니다. `RESULT.md` 의 각 표 아래 `지표 설명` 과 스프레드시트의 `Legend` 시트에도 같은 내용이
+들어갑니다. 여기서는 **결과 파일을 읽을 때만 걸리는 함정**을 다룹니다.
 
 **한국어 ROUGE는 문자 단위 토큰화를 씁니다.** `rouge-score` 의 기본 토크나이저는 `[a-z0-9]`
 이외 문자를 모두 제거해서 한국어 텍스트를 통째로 날려버리고 모든 모델에 0.0을 줍니다. 그래서
 다국어 토크나이저를 넣었습니다. 라틴 문자는 단어 단위, 한글/CJK는 문자 단위입니다. 따라서
-한국어 ROUGE는 *이 벤치마크 안의 모델 간 비교* 에는 유효하지만, 단어 단위인 영어 ROUGE와
-직접 비교할 수는 없습니다.
+한국어 ROUGE 값은 *이 벤치마크 안의 모델 간 비교* 에는 유효하지만, 단어 단위인 영어 ROUGE와
+직접 비교할 수는 없습니다. 한국어 값이 영어보다 높게 나오는 것도 이 때문입니다.
 
-**EN과 KO 환각 점수는 엄밀히 비교 대상이 아닙니다.** 영어 케이스는 HaluEval로, LLM이 올바른
-요약을 일부러 망가뜨린 것입니다. 한국어 케이스는 AI-Hub로, 사람이 실제 기계 생성 요약을
-교정한 것입니다. 따라서 한국어 `HALLUCINATED` 후보는 실제 모델 출력이라 불충실할 뿐 아니라
-비문인 경우가 많고, 영어 쪽은 구조상 유창합니다. 두 열을 가로질러 비교하지 말고, 각 언어
-열 안에서 모델끼리 비교하세요.
+**빈 칸은 0이 아니라 "계산되지 않음"입니다.** 리포트의 `—` 와 스프레드시트의 빈 셀은 값이
+없다는 뜻입니다. 가장 흔한 경우는 BERTScore(선택 extra 미설치)와 `SKIPPED` 상태의 한국어
+환각 벤치마크입니다. 절대 `0.0` 으로 채우지 않습니다.
 
-**Invalid output은 오답으로 셉니다.** 파싱 불가능한 응답을 낸 모델이 해당 케이스를 분모에서
-빼는 이득을 얻지 않습니다. 점수가 낮은 이유를 볼 수 있도록 `invalid_output_rate` 를 함께 보고합니다.
+**thinking 을 켠 모델은 조건이 다릅니다.** thinking 을 끌 수 없어 켜 둔 모델은 reasoning token 이
+추가 과금되고 출력 길이 상한도 다릅니다. `Reasoning` 토큰 열이 0이 아닌 모델이 여기 해당합니다.
+[문제 해결](#reasoning-is-mandatory-for-this-endpoint-and-cannot-be-disabled) 참고.
 
-**Cross-lingual consistency** 는 같은 semantic id를 공유하는 EN/KO 쌍에서 *정오답이 일치하는지*
-를 봅니다. 정답 여부와 무관하게 *같은 intent를 예측했는지* 는 `prediction_agreement` 로 따로 냅니다.
+**비용은 마지막 실행이 아니라 누적입니다.** `Total` 은 그 모델의 캐시를 만드는 데 지금까지
+지불한 총액이고, 이번 실행에서 새로 나간 금액은 `Fresh this run` 입니다. 캐시가 다 맞으면
+후자는 $0 입니다.
 
-**BERTScore는 `null` 일 수 있습니다.** 선택적 extra가 설치되지 않은 경우이며, 사유와 함께
-표시되고 절대 `0.0` 으로 처리하지 않습니다.
+**주의사항 세 가지는 어디서 보든 따라옵니다.** 종합 점수를 만들지 않는다는 것,
+Surface fact support 가 진단 지표라는 것, EN/KO 환각 점수가 직접 비교 대상이 아니라는 것은
+RESULT.md 맨 앞과 스프레드시트 `About` 시트에도 들어갑니다. 표만 떼어가도 맥락이 남도록
+한 것입니다.
 
 ---
 

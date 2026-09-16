@@ -315,12 +315,15 @@ def test_notes_section_lists_aborted_runs(project):
 
 
 def test_judge_section_only_appears_when_used(project):
+    """The heading, not the word: the cost legend mentions the judge either way."""
     _write(project, [_summary()])
-    assert "LLM-as-a-Judge" not in generate_reports(project).paths["result_md"].read_text(encoding="utf-8")
+    assert "## LLM-as-a-Judge" not in generate_reports(project).paths["result_md"].read_text(
+        encoding="utf-8"
+    )
 
     _write(project, [_summary(judge=True)])
     document = generate_reports(project).paths["result_md"].read_text(encoding="utf-8")
-    assert "LLM-as-a-Judge" in document
+    assert "## LLM-as-a-Judge" in document
     assert "openai/gpt-5.6-luna" in document
 
 
@@ -333,7 +336,7 @@ def test_workbook_sheets_and_values(results):
     workbook = openpyxl.load_workbook(path)
 
     assert workbook.sheetnames == [
-        "About", "Leaderboard", "Summarization", "Hallucination", "Classification",
+        "About", "Legend", "Leaderboard", "Summarization", "Hallucination", "Classification",
         "CrossLingual", "SurfaceFacts", "Cost", "Usage", "Judge", "Runs",
     ]
 
@@ -410,3 +413,81 @@ def test_skipped_language_is_reported_not_dropped():
     ko = next(r for r in tables["Hallucination"] if r["language"] == "ko")
     assert ko["status"] == "SKIPPED"
     assert ko["accuracy"] is None
+
+
+# --------------------------------------------------------------------------- #
+# descriptions and metric legends
+# --------------------------------------------------------------------------- #
+def test_result_markdown_explains_each_benchmark(results):
+    document = generate_reports(results).paths["result_md"].read_text(encoding="utf-8")
+
+    assert "## 벤치마크 구성" in document
+    # Each benchmark says what it measures and how big it is.
+    for fragment in ("XL-Sum", "HaluEval", "AI-Hub", "MASSIVE", "60개 인텐트", "1~3문장"):
+        assert fragment in document, fragment
+
+
+def test_every_table_has_a_metric_legend(results):
+    document = generate_reports(results).paths["result_md"].read_text(encoding="utf-8")
+
+    sections_with_legend = document.count("<details><summary>지표 설명</summary>")
+    assert sections_with_legend >= 8
+    assert document.count("<details>") == document.count("</details>")
+    # The legend explains the arrows it uses.
+    assert "↑ 높을수록 좋음" in document and "↓ 낮을수록 좋음" in document
+
+
+def test_legend_marks_metric_direction(results):
+    document = generate_reports(results).paths["result_md"].read_text(encoding="utf-8")
+
+    assert "| ROUGE-Lsum | ↑ |" in document
+    assert "| Invalid | ↓ |" in document
+    assert "| Both wrong | ↓ |" in document
+    # Compression has no good direction, so it must not claim one.
+    assert "| Compression | — |" in document
+
+
+def test_legend_gives_the_random_baseline(results):
+    """A score means nothing without knowing what chance looks like."""
+    document = generate_reports(results).paths["result_md"].read_text(encoding="utf-8")
+    assert "무작위 추측의 정확도는 0.5" in document      # binary hallucination task
+    assert "1/60" in document                            # 60-way classification
+
+
+def test_every_reported_column_is_explained(results):
+    """A column with no legend entry is a number nobody can interpret."""
+    from llmbench.reporting import result_doc
+
+    pairs = [
+        (result_doc.SUMMARIZATION_COLUMNS, result_doc.SUMMARIZATION_LEGEND),
+        (result_doc.HALLUCINATION_COLUMNS, result_doc.HALLUCINATION_LEGEND),
+        (result_doc.CLASSIFICATION_COLUMNS, result_doc.CLASSIFICATION_LEGEND),
+        (result_doc.CROSS_LINGUAL_COLUMNS, result_doc.CROSS_LINGUAL_LEGEND),
+        (result_doc.SURFACE_FACT_COLUMNS, result_doc.SURFACE_FACT_LEGEND),
+    ]
+    for columns, legend in pairs:
+        explained = {part.strip() for name, _, _ in legend for part in name.split("/")}
+        for _, label, _ in columns:
+            if label in {"Model", "Lang", "Scope", "Status"}:
+                continue
+            assert label.rstrip("*") in explained, f"{label} has no legend entry"
+
+
+def test_workbook_legend_sheet_explains_the_columns(results):
+    """The workbook gets copied around on its own, so it must explain itself."""
+    openpyxl = pytest.importorskip("openpyxl")
+    workbook = openpyxl.load_workbook(generate_reports(results).paths["excel"])
+    sheet = workbook["Legend"]
+
+    assert [cell.value for cell in sheet[1]] == ["Sheet", "지표", "방향", "의미"]
+    rows = [[cell.value for cell in row] for row in sheet.iter_rows(min_row=2)]
+    assert len(rows) > 30
+
+    by_sheet = {name for name, *_ in rows}
+    assert {"Summarization", "Hallucination", "Classification", "Cost"} <= by_sheet
+    assert {"↑", "↓", "—"} >= {row[2] for row in rows}
+
+    rouge = next(row for row in rows if row[1] == "ROUGE-Lsum")
+    assert rouge[2] == "↑"
+    # Every legended sheet actually exists in the workbook.
+    assert by_sheet <= set(workbook.sheetnames)

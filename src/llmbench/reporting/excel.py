@@ -13,6 +13,18 @@ from typing import Any, Sequence
 
 from llmbench.config.loader import AppConfig
 from llmbench.core.reproducibility import utc_now_iso
+from llmbench.reporting.result_doc import (
+    CLASSIFICATION_LEGEND,
+    COST_LEGEND,
+    CROSS_LINGUAL_LEGEND,
+    HALLUCINATION_LEGEND,
+    JUDGE_LEGEND,
+    LEGEND_KEY,
+    SUMMARIZATION_LEGEND,
+    SURFACE_FACT_LEGEND,
+    USAGE_LEGEND,
+    _ARROW,
+)
 from llmbench.reporting.tables import TABLES, build_tables
 from llmbench.version import BENCHMARK_VERSION
 
@@ -43,7 +55,32 @@ _ABOUT = [
     ("EN vs KO hallucination", "Different sources (HaluEval vs AI-Hub); compare within a language."),
     ("Korean ROUGE", "Character-level tokenization; not comparable with word-level English ROUGE."),
     ("Empty metric cells", "Mean the metric was not computed (e.g. BERTScore extra not installed)."),
+    ("", ""),
+    ("Metric directions", LEGEND_KEY),
+    ("Legend sheet", "Explains every metric column: what it means and which way is better."),
 ]
+
+
+# Sheet -> its metric legend, so the workbook explains its own columns exactly
+# the way RESULT.md does (both read the same definitions).
+_SHEET_LEGENDS = (
+    ("Summarization", SUMMARIZATION_LEGEND),
+    ("Hallucination", HALLUCINATION_LEGEND),
+    ("Classification", CLASSIFICATION_LEGEND),
+    ("CrossLingual", CROSS_LINGUAL_LEGEND),
+    ("SurfaceFacts", SURFACE_FACT_LEGEND),
+    ("Cost", COST_LEGEND),
+    ("Usage", USAGE_LEGEND),
+    ("Judge", JUDGE_LEGEND),
+)
+
+
+def _legend_rows() -> list[tuple[str, str, str, str]]:
+    rows = []
+    for sheet, legend in _SHEET_LEGENDS:
+        for name, direction, meaning in legend:
+            rows.append((sheet, name, _ARROW[direction], meaning))
+    return rows
 
 
 def _number_format(column: str) -> str | None:
@@ -104,7 +141,10 @@ def write_excel(
         about = pd.DataFrame(_ABOUT, columns=["Field", "Value"])
         about.to_excel(writer, sheet_name="About", index=False)
 
-        written: list[tuple[str, Any]] = [("About", about)]
+        legend = pd.DataFrame(_legend_rows(), columns=["Sheet", "지표", "방향", "의미"])
+        legend.to_excel(writer, sheet_name="Legend", index=False)
+
+        written: list[tuple[str, Any]] = [("About", about), ("Legend", legend)]
         for sheet, rows in tables.items():
             # An empty view still gets a sheet, so the workbook's shape does not
             # change depending on whether the judge happened to run.
@@ -129,6 +169,11 @@ def write_excel(
                     continue
                 for row in range(2, worksheet.max_row + 1):
                     worksheet.cell(row=row, column=index).number_format = fmt
+
+        legend_sheet = writer.sheets["Legend"]
+        legend_sheet.column_dimensions["D"].width = 90
+        for row in range(2, legend_sheet.max_row + 1):
+            legend_sheet.cell(row=row, column=4).alignment = Alignment(wrap_text=True, vertical="top")
 
         # Long descriptions on the About sheet need room to breathe.
         about_sheet = writer.sheets["About"]

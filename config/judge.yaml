@@ -1,0 +1,27 @@
+# Optional LLM-as-a-Judge. Disabled by default: the headline benchmark contains
+# no LLM-judged numbers.
+#
+# The judge is called through OpenRouter like everything else.
+version: 1
+judge:
+  enabled: false
+  prompt_version: "judge-1"
+  rubric_version: "rubric-1"
+  samples:
+    total: 200
+    en: 100
+    ko: 100
+  manifest: judge_xlsum_v1.jsonl
+  generation:
+    temperature: 0.0
+    top_p: 1.0
+    max_output_tokens: 512
+    reasoning:
+      enabled: false
+  profiles:
+    cheap:
+      model_id: openai/gpt-5.6-luna
+    strong:
+      model_id: openai/gpt-5.6-sol
+  # A model must never be the primary factuality judge of itself.
+  self_judge_policy: warn_and_demote

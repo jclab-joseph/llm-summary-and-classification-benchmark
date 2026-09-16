@@ -1,0 +1,61 @@
+[project]
+name = "llm-summary-and-classification-benchmark"
+version = "1.0.0"
+description = "Reproducible, cache-first benchmark for low-cost LLMs (summarization / hallucination / classification) over OpenRouter"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+dependencies = [
+    "httpx>=0.27",
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "rich>=13.7",
+    "sqlalchemy>=2.0",
+    "pandas>=2.2",
+    "pyarrow>=16.0",
+    "numpy>=1.26",
+    "sacrebleu>=2.4",
+    "rouge-score>=0.1.2",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+# BERTScore pulls in torch + transformers (multi-GB). Kept optional so that a plain
+# `uv sync` stays light; install with `uv sync --extra bertscore` to enable the metric.
+bertscore = [
+    "bert-score>=0.3.13",
+    "torch>=2.2",
+    "transformers>=4.40",
+]
+# Only needed if you want to re-derive datasets through the HuggingFace `datasets`
+# library instead of the built-in pinned-revision downloader.
+hf = [
+    "datasets>=2.19",
+]
+
+# Test dependencies live in a PEP 735 dependency group so a plain `uv sync`
+# installs them (extras would need `--extra dev`).
+[dependency-groups]
+dev = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    # Used only to cross-check this project's hand-written macro-F1 against a
+    # reference implementation; the benchmark itself does not depend on it.
+    "scikit-learn>=1.4",
+]
+
+[project.scripts]
+benchmark = "llmbench.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/llmbench"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+filterwarnings = ["ignore::DeprecationWarning"]

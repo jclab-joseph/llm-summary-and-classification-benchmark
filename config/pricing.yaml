@@ -1,0 +1,101 @@
+# Fallback / estimate pricing, in USD per 1,000,000 tokens.
+#
+# These numbers are ONLY used for:
+#   * pre-run budget estimation (`benchmark estimate`, `--dry-run`)
+#   * validation of the cost OpenRouter reports
+# They are NEVER the authoritative cost. The authoritative cost of a request is
+# `usage.cost` from the OpenRouter response (see config/benchmark.yaml -> cost).
+#
+# `benchmark pricing` refreshes a snapshot from the OpenRouter /models endpoint;
+# these values are the offline fallback when that call fails.
+version: 1
+currency: USD
+source: config
+
+# Eligibility gate for the "default" cheap-model benchmark.
+constraints:
+  max_input_per_million: 0.25
+  max_output_per_million: 1.50
+
+models:
+  openai/gpt-5.6-luna:
+    input_per_million: 0.20
+    output_per_million: 1.20
+    cached_input_per_million: null
+
+  google/gemini-3.1-flash-lite:
+    input_per_million: 0.25
+    output_per_million: 1.50
+    cached_input_per_million: null
+
+  google/gemini-2.5-flash-lite:
+    input_per_million: 0.10
+    output_per_million: 0.40
+    cached_input_per_million: null
+
+  mistralai/mistral-small-2603:
+    input_per_million: 0.15
+    output_per_million: 0.60
+    cached_input_per_million: null
+
+  mistralai/ministral-14b-2512:
+    input_per_million: 0.20
+    output_per_million: 0.20
+    cached_input_per_million: null
+
+  mistralai/ministral-8b-2512:
+    input_per_million: 0.15
+    output_per_million: 0.15
+    cached_input_per_million: null
+
+  mistralai/ministral-3b-2512:
+    input_per_million: 0.10
+    output_per_million: 0.10
+    cached_input_per_million: null
+
+  openai/gpt-5.4-nano:
+    input_per_million: 0.2
+    output_per_million: 1.25
+    cached_input_per_million: 0.02
+
+  openai/gpt-5-nano:
+    input_per_million: 0.05
+    output_per_million: 0.4
+    cached_input_per_million: 0.005
+
+  openai/gpt-4.1-nano:
+    input_per_million: 0.1
+    output_per_million: 0.4
+    cached_input_per_million: 0.025
+
+  qwen/qwen3.8-flash:
+    input_per_million: 0.15
+    output_per_million: 0.47
+    cached_input_per_million: 0.016
+
+  qwen/qwen3.7-flash:
+    input_per_million: 0.03
+    output_per_million: 0.13
+    cached_input_per_million: 0.006
+
+  qwen/qwen3-30b-a3b-instruct-2507:
+    input_per_million: 0.04815
+    output_per_million: 0.19305
+    cached_input_per_million: null
+
+  z-ai/glm-5.3-flash:
+    input_per_million: 0.1
+    output_per_million: 0.3333
+    cached_input_per_million: 0.02
+
+  deepseek/deepseek-v4-flash-0731:
+    input_per_million: 0.055
+    output_per_million: 0.11
+    cached_input_per_million: 0.011
+
+  # Strong judge. Deliberately left without hardcoded numbers: its price moves with
+  # promotions and routing, so it MUST be resolved from OpenRouter at run time.
+  openai/gpt-5.6-sol:
+    input_per_million: null
+    output_per_million: null
+    cached_input_per_million: null

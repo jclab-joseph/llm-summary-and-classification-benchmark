@@ -1,0 +1,199 @@
+# Global benchmark configuration.
+#
+# NOTE ON CACHING: every key under `generation`, `prompts`, `truncation` and
+# `structured_output` participates in the inference cache key. Changing any of
+# them is a semantic change and correctly forces re-inference. `pricing`,
+# `report` and `metrics` deliberately do NOT participate.
+version: 1
+benchmark_version: "1.0.0"
+
+paths:
+  manifests: data/manifests
+  cache_db: data/cache/benchmark.db
+  raw_data: data/raw
+  results: results
+
+sampling:
+  seed: 20240917
+  # Frozen once, in `benchmark prepare`. Re-sampling requires `prepare --force`.
+
+generation:
+  version: "gen-1"          # bump to intentionally invalidate every inference
+  temperature: 0.0
+  top_p: 1.0
+  seed: null
+  tools_enabled: false
+  web_search_enabled: false
+  # Per-benchmark output caps (also sent as max_tokens to OpenRouter).
+  max_output_tokens:
+    summarization: 200      # ~160 token target + slack
+    hallucination: 8
+    classification: 320     # 20 numbered answers
+
+truncation:
+  version: "trunc-1"
+  # Canonical, model-independent source truncation. Identical for every model.
+  summarization_max_source_tokens: 1800
+  hallucination_max_source_tokens: 1600
+  word_boundary: true
+
+structured_output:
+  version: "so-1"
+  classification_mode: text   # text | json_schema
+  judge_mode: json_schema
+
+concurrency:
+  max_parallel_requests: 8
+  request_timeout_seconds: 180
+
+retry:
+  max_attempts: 4
+  initial_backoff_seconds: 1.0
+  max_backoff_seconds: 30.0
+  jitter_seconds: 0.5
+
+# Circuit breaker. A misconfiguration fails identically on every case, so a run
+# that is failing systematically is stopped early instead of burning the whole
+# benchmark to produce 1,300 copies of the same error.
+failure_guard:
+  enabled: true
+  max_consecutive_failures: 10
+  max_failure_rate: 0.5
+  min_attempts_before_rate_check: 20
+
+logging:
+  directory: data/logs
+  # Every run always writes a DEBUG-level log file here. The console stays quiet
+  # unless you pass -v / -vv.
+  keep_last: 50
+
+budget:
+  # Per-model budget for the *default* (non-judge) benchmark.
+  default_usd: 1.00
+  # Stop issuing new requests once projected spend crosses this fraction of budget.
+  stop_margin: 0.98
+
+cost:
+  # OpenRouter `usage.cost` is the authoritative billed amount.
+  authoritative_source: openrouter_usage_cost
+  # Warn when the pricing-table recomputation differs from usage.cost by more than this.
+  reconciliation_tolerance_usd: 0.000005
+  reconciliation_relative_tolerance: 0.02
+
+# Conservative pre-run token envelope (used by `estimate` when a task has never
+# been run, before any empirical token statistics exist).
+token_envelope:
+  summarization:
+    input: 720000
+    output: 64000
+  hallucination:
+    input: 1280000
+    output: 6400
+  classification:
+    input: 185000
+    output: 10000
+
+benchmarks:
+  summarization:
+    name: summarization
+    version: "1.0.0"
+    manifest: xlsum_v1.jsonl
+    cases:
+      en: 200
+      ko: 200
+  hallucination:
+    name: hallucination
+    version: "1.0.0"
+    manifests:
+      en: halueval_summary_v1.jsonl
+      ko: aihub_summary_factuality_v1.jsonl
+    documents:
+      en: 200
+      ko: 200
+  classification:
+    name: classification
+    version: "1.0.0"
+    manifest: massive_v1.jsonl
+    cases:
+      en: 1000
+      ko: 1000
+    batch_size: 20
+
+metrics:
+  # Metric config is NOT part of the inference cache key; it is part of the
+  # metric cache key only.
+  rouge:
+    version: "rouge-1.1"
+    tokenizer: multilingual-v1   # char-level for Hangul/CJK, word-level for Latin
+    use_stemmer: false
+  chrf:
+    version: "chrf-1.0"
+    word_order: 2                # chrF++ (word bigrams)
+    char_order: 6
+    beta: 2
+  bertscore:
+    version: "bertscore-1.0"
+    enabled: true                # silently degrades to null if extra not installed
+    model_type: bert-base-multilingual-cased
+    num_layers: 9
+    batch_size: 32
+    idf: false
+  surface_facts:
+    version: "surface-facts-1.1"
+    check_numbers: true
+    check_percentages: true
+    check_dates: true
+    check_currency: true
+    check_entities: true
+    numeric_tolerance: 0.0
+  classification_metrics:
+    version: "clsmetrics-1.0"
+  hallucination_metrics:
+    version: "halumetrics-1.0"
+
+dataset_sources:
+  xlsum:
+    repo: csebuetnlp/xlsum
+    revision: 30fece425f9a3866e04321773ca7a80056d55ca6
+    files:
+      en: data/english_XLSum_v2.0.tar.bz2
+      ko: data/korean_XLSum_v2.0.tar.bz2
+    split: test
+  halueval:
+    repo: pminervini/HaluEval
+    revision: 12a856119f03975a94509091e8cada3e6be6ead7
+    config: summarization
+    split: data
+    file: summarization/data-00000-of-00001.parquet
+  massive:
+    repo: mteb/amazon_massive_intent
+    revision: 940fd47a81eaa7f2cc7b129674d945d618ac38c2
+    split: test
+    files:
+      en: test/en.json.gz
+      ko: test/ko.json.gz
+  aihub:
+    # AI-Hub "추상 요약 사실성 검증" data is licence-gated: it is NEVER downloaded.
+    # Point AIHUB_FACTUALITY_DATA_PATH at your local copy (the distributed .zip
+    # archives are read in place; no extraction needed).
+    env_var: AIHUB_FACTUALITY_DATA_PATH
+    revision: local
+    # corrected_type5 = "[5] 키워드 또는 중요 내용 오류", the content-factuality
+    # error type. The other five types are spelling, word choice, ungrammatical
+    # text, incomplete sentences and repetition -- none of which makes a summary
+    # factually unsupported, so they are NOT usable for this benchmark.
+    preferred_error_type: type5
+    allow_non_factual_fallback: false
+    # Drop documents whose only annotated error is a missing-content omission:
+    # the "erroneous" summary's remaining claims are all still supported, so
+    # labelling it HALLUCINATED would poison the benchmark.
+    exclude_omission_only_errors: true
+    # Drop records whose summary lost its first syllable upstream (e.g. "럼프
+    # 대통령" for "트럼프 대통령"): a mangled candidate tests OCR tolerance, not
+    # factual consistency.
+    exclude_broken_prefix_summaries: true
+    # Which AI-Hub split to read: Training | Validation | null (scan everything).
+    split: Validation
+    # Only keep documents whose source survives the truncation budget intact: a
+    # SUPPORTED label is unverifiable if the supporting evidence was cut off.
+    require_untruncated_source: true

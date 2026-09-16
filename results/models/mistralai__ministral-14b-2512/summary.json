@@ -1,0 +1,620 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-16T03:15:02+00:00",
+  "run_id": "run-20260916T031043-60c30b6a",
+  "status": "COMPLETED",
+  "api_provider": "openrouter",
+  "model": {
+    "model_id": "mistralai/ministral-14b-2512",
+    "display_name": "Ministral 3 14B",
+    "vendor": "mistralai",
+    "safe_slug": "mistralai__ministral-14b-2512",
+    "max_output_tokens": 256,
+    "reasoning": {
+      "enabled": false,
+      "effort": null,
+      "max_tokens": null,
+      "exclude": true
+    },
+    "routing": {
+      "mode": "default",
+      "provider_order": null,
+      "allow_fallbacks": true,
+      "only": null,
+      "ignore": null,
+      "require_parameters": true,
+      "data_collection": "allow",
+      "sort": null,
+      "quantizations": null
+    },
+    "routing_config_hash": "cbe6fb9c14d4b2b12e690d6565e05bcf861c5db26cc56aef45e3e3810f67b298",
+    "uses_alias": false
+  },
+  "scope": {
+    "benchmarks": [
+      "summarization",
+      "hallucination",
+      "classification"
+    ],
+    "languages": [
+      "en",
+      "ko"
+    ],
+    "total_tasks": 1300,
+    "total_cases": 3200,
+    "skipped": {}
+  },
+  "cache": {
+    "cache_hits": 0,
+    "cache_misses": 1300,
+    "openrouter_api_calls": 1300,
+    "openrouter_http_attempts": 1300,
+    "metric_cache": {
+      "hits": 0,
+      "misses": 2500
+    }
+  },
+  "usage": {
+    "prompt_tokens": 1092316,
+    "cached_tokens": 295936,
+    "cache_write_tokens": 0,
+    "completion_tokens": 71944,
+    "reasoning_tokens": 0,
+    "total_tokens": 1164260,
+    "successful_cases": 1300
+  },
+  "cost": {
+    "pricing_snapshot": {
+      "model_id": "mistralai/ministral-14b-2512",
+      "input_per_million": 0.2,
+      "output_per_million": 0.2,
+      "cached_input_per_million": 0.02,
+      "retrieved_at": "2026-09-16T03:10:41+00:00",
+      "source": "openrouter"
+    },
+    "authoritative_source": "openrouter usage.cost",
+    "by_benchmark": {
+      "classification": 0.01189376,
+      "hallucination": 0.08999796,
+      "summarization": 0.0776918
+    },
+    "summarization_cost": 0.0776918,
+    "hallucination_cost": 0.08999796,
+    "classification_cost": 0.01189376,
+    "retry_error_cost": 0,
+    "judge_cost": 0.0,
+    "total_openrouter_cost": 0.17958352,
+    "fresh_cost_this_run": 0.17958352000000005,
+    "stored_benchmark_cost": 0.17958352,
+    "estimated_cost_without_cache": 0.17958352000000005,
+    "estimated_cache_savings": 0.0,
+    "attempts": {
+      "by_status": {
+        "SUCCESS": {
+          "count": 1300,
+          "usage_cost": 0.17958352
+        }
+      },
+      "success_attempts": 1300,
+      "success_cost": 0.17958352,
+      "error_attempts": 0,
+      "error_cost": 0,
+      "total_attempts": 1300,
+      "total_cost": 0.17958352
+    },
+    "reconciliation": {
+      "recomputed_from_pricing_table": 0.17958352,
+      "actual_usage_cost": 0.17958352,
+      "difference": 0.0,
+      "relative_difference": 0.0,
+      "matches_within_tolerance": true,
+      "authoritative": "openrouter usage.cost"
+    }
+  },
+  "failures": {},
+  "failure_guard": {
+    "enabled": true,
+    "tripped": false,
+    "reason": null,
+    "attempts": 1300,
+    "failures": 0,
+    "failure_rate": 0.0,
+    "consecutive_failures": 0,
+    "status_counts": {},
+    "top_errors": [],
+    "first_failure": null
+  },
+  "preflight": {
+    "checked": true,
+    "supported_parameters": [
+      "frequency_penalty",
+      "max_tokens",
+      "presence_penalty",
+      "response_format",
+      "seed",
+      "stop",
+      "structured_outputs",
+      "temperature",
+      "tool_choice",
+      "tools",
+      "top_p"
+    ],
+    "sending": [
+      "temperature",
+      "top_p"
+    ],
+    "blocking": [],
+    "informational": [],
+    "require_parameters": true
+  },
+  "skipped": {
+    "by_failure_guard": 0,
+    "by_budget": 0
+  },
+  "log_path": "/home/joseph/jcworkspace/llm-summary-and-classification-benchmark/data/logs/benchmark-20260916T025908.log",
+  "notes": [],
+  "metrics": {
+    "summarization": {
+      "benchmark": "summarization",
+      "version": "1.0.0",
+      "manifest_hash": "0135c4f4499e35dcde7855ad6afe33e333ebf2bca519a20b81257dc39150cd62",
+      "dataset_revision": "30fece425f9a3866e04321773ca7a80056d55ca6",
+      "per_language": {
+        "en": {
+          "cases": 200,
+          "scored_cases": 200,
+          "failed_cases": 0,
+          "rouge1_f": 0.17350169809013394,
+          "rouge2_f": 0.03792023315568385,
+          "rougeLsum_f": 0.13406434967942565,
+          "chrf": 23.15600037313629,
+          "bertscore_f1": null,
+          "bertscore_scored_cases": 0,
+          "surface_fact_support_precision": 0.8982440342188204,
+          "compression_ratio": 0.30808233133066737,
+          "output_tokens_mean": 128.415,
+          "output_chars_mean": 596.77,
+          "empty_output_rate": 0.0,
+          "refusal_rate": 0.0,
+          "surface_fact_diagnostic": {
+            "diagnostic": true,
+            "note": "Surface-level check only; not a complete hallucination metric.",
+            "facts_total": 2221,
+            "facts_supported": 1995,
+            "surface_fact_support_precision": 0.8982440342188204,
+            "summaries_with_facts": 200,
+            "number_mismatch": 24,
+            "percentage_mismatch": 5,
+            "date_mismatch": 16,
+            "currency_mismatch": 21,
+            "unsupported_named_entity": 160,
+            "per_category": {
+              "number": {
+                "total": 316,
+                "supported": 292,
+                "support_rate": 0.9240506329113924
+              },
+              "percentage": {
+                "total": 67,
+                "supported": 62,
+                "support_rate": 0.9253731343283582
+              },
+              "date": {
+                "total": 162,
+                "supported": 146,
+                "support_rate": 0.9012345679012346
+              },
+              "currency": {
+                "total": 80,
+                "supported": 59,
+                "support_rate": 0.7375
+              },
+              "entity": {
+                "total": 1596,
+                "supported": 1436,
+                "support_rate": 0.899749373433584
+              }
+            }
+          }
+        },
+        "ko": {
+          "cases": 200,
+          "scored_cases": 200,
+          "failed_cases": 0,
+          "rouge1_f": 0.26529467873225626,
+          "rouge2_f": 0.11318384581051118,
+          "rougeLsum_f": 0.20084862197629902,
+          "chrf": 12.329176536672874,
+          "bertscore_f1": null,
+          "bertscore_scored_cases": 0,
+          "surface_fact_support_precision": 0.9363636363636364,
+          "compression_ratio": 0.18590330508325653,
+          "output_tokens_mean": 121.845,
+          "output_chars_mean": 250.715,
+          "empty_output_rate": 0.0,
+          "refusal_rate": 0.0,
+          "surface_fact_diagnostic": {
+            "diagnostic": true,
+            "note": "Surface-level check only; not a complete hallucination metric.",
+            "facts_total": 990,
+            "facts_supported": 927,
+            "surface_fact_support_precision": 0.9363636363636364,
+            "summaries_with_facts": 196,
+            "number_mismatch": 21,
+            "percentage_mismatch": 0,
+            "date_mismatch": 19,
+            "currency_mismatch": 2,
+            "unsupported_named_entity": 21,
+            "per_category": {
+              "number": {
+                "total": 514,
+                "supported": 493,
+                "support_rate": 0.9591439688715954
+              },
+              "percentage": {
+                "total": 43,
+                "supported": 43,
+                "support_rate": 1.0
+              },
+              "date": {
+                "total": 153,
+                "supported": 134,
+                "support_rate": 0.8758169934640523
+              },
+              "currency": {
+                "total": 37,
+                "supported": 35,
+                "support_rate": 0.9459459459459459
+              },
+              "entity": {
+                "total": 243,
+                "supported": 222,
+                "support_rate": 0.9135802469135802
+              }
+            }
+          }
+        }
+      },
+      "evaluators": {
+        "rouge": {
+          "version": "rouge-1.1",
+          "config": {
+            "tokenizer": "multilingual-v1",
+            "use_stemmer": false,
+            "variants": [
+              "rouge1",
+              "rouge2",
+              "rougeLsum"
+            ]
+          }
+        },
+        "chrf": {
+          "version": "chrf-1.0",
+          "config": {
+            "word_order": 2,
+            "char_order": 6,
+            "beta": 2
+          }
+        },
+        "surface_facts": {
+          "version": "surface-facts-1.1",
+          "config": {
+            "version": "surface-facts-1.1",
+            "check_numbers": true,
+            "check_percentages": true,
+            "check_dates": true,
+            "check_currency": true,
+            "check_entities": true,
+            "numeric_tolerance": 0.0
+          }
+        },
+        "bertscore": {
+          "enabled": true,
+          "available": false,
+          "model_type": "bert-base-multilingual-cased",
+          "num_layers": 9,
+          "version": "bertscore-1.0",
+          "unavailable_reason": "bert-score is not installed; run `uv sync --extra bertscore` to enable it"
+        }
+      }
+    },
+    "hallucination": {
+      "benchmark": "hallucination",
+      "version": "1.0.0",
+      "manifest_hashes": {
+        "en": "21debf696ed02ef001638142e2864a1bb58be409f88d8c86ad36e067ee609ca5",
+        "ko": "b49d914db700703584e2388f602808314a59c9e088a20f02e670ead58141fa96"
+      },
+      "per_language": {
+        "en": {
+          "cases": 400,
+          "scored_cases": 400,
+          "failed_cases": 0,
+          "valid_outputs": 400,
+          "invalid_outputs": 0,
+          "invalid_output_rate": 0.0,
+          "accuracy": 0.705,
+          "macro_f1": 0.7045272435897436,
+          "hallucination_precision": 0.6898148148148148,
+          "hallucination_recall": 0.745,
+          "hallucination_f1": 0.7163461538461539,
+          "supported_recall": 0.665,
+          "supported_precision": 0.7228260869565217,
+          "supported_f1": 0.6927083333333334,
+          "per_class": {
+            "SUPPORTED": {
+              "precision": 0.7228260869565217,
+              "recall": 0.665,
+              "f1": 0.6927083333333334,
+              "support": 200,
+              "tp": 133,
+              "fp": 51,
+              "fn": 67
+            },
+            "HALLUCINATED": {
+              "precision": 0.6898148148148148,
+              "recall": 0.745,
+              "f1": 0.7163461538461539,
+              "support": 200,
+              "tp": 149,
+              "fp": 67,
+              "fn": 51
+            }
+          },
+          "status": "OK",
+          "documents": 200
+        },
+        "ko": {
+          "cases": 400,
+          "scored_cases": 400,
+          "failed_cases": 0,
+          "valid_outputs": 400,
+          "invalid_outputs": 0,
+          "invalid_output_rate": 0.0,
+          "accuracy": 0.6825,
+          "macro_f1": 0.6824980156125975,
+          "hallucination_precision": 0.681592039800995,
+          "hallucination_recall": 0.685,
+          "hallucination_f1": 0.683291770573566,
+          "supported_recall": 0.68,
+          "supported_precision": 0.6834170854271356,
+          "supported_f1": 0.681704260651629,
+          "per_class": {
+            "SUPPORTED": {
+              "precision": 0.6834170854271356,
+              "recall": 0.68,
+              "f1": 0.681704260651629,
+              "support": 200,
+              "tp": 136,
+              "fp": 63,
+              "fn": 64
+            },
+            "HALLUCINATED": {
+              "precision": 0.681592039800995,
+              "recall": 0.685,
+              "f1": 0.683291770573566,
+              "support": 200,
+              "tp": 137,
+              "fp": 64,
+              "fn": 63
+            }
+          },
+          "status": "OK",
+          "documents": 200
+        }
+      },
+      "evaluators": {
+        "hallucination_metrics": {
+          "version": "halumetrics-1.0",
+          "config": {
+            "labels": [
+              "SUPPORTED",
+              "HALLUCINATED"
+            ],
+            "positive_class": "HALLUCINATED"
+          }
+        }
+      }
+    },
+    "classification": {
+      "benchmark": "classification",
+      "version": "1.0.0",
+      "manifest_hash": "1bebd7a4e6cab622b3a85e6f856e019c9459100085c08ca38ccec107d5e3ec21",
+      "dataset_revision": "940fd47a81eaa7f2cc7b129674d945d618ac38c2",
+      "label_space_size": 60,
+      "batch_size": 20,
+      "per_language": {
+        "en": {
+          "cases": 1000,
+          "accuracy": 0.78,
+          "macro_f1": 0.7603515978750895,
+          "correct": 780,
+          "invalid_outputs": 0,
+          "invalid_output_rate": 0.0,
+          "failed_cases": 0,
+          "label_space_size": 60
+        },
+        "ko": {
+          "cases": 1000,
+          "accuracy": 0.744,
+          "macro_f1": 0.7113942857254609,
+          "correct": 744,
+          "invalid_outputs": 0,
+          "invalid_output_rate": 0.0,
+          "failed_cases": 0,
+          "label_space_size": 60
+        }
+      },
+      "overall": {
+        "cases": 2000,
+        "accuracy": 0.762,
+        "macro_f1": 0.736163325053324,
+        "correct": 1524,
+        "invalid_outputs": 0,
+        "invalid_output_rate": 0.0,
+        "failed_cases": 0,
+        "label_space_size": 60
+      },
+      "cross_lingual": {
+        "paired_cases": 1000,
+        "prediction_agreement": 0.768,
+        "consistency": 0.824,
+        "both_correct": 674,
+        "both_correct_rate": 0.674,
+        "en_only_correct": 106,
+        "en_only_correct_rate": 0.106,
+        "ko_only_correct": 70,
+        "ko_only_correct_rate": 0.07,
+        "both_wrong": 150,
+        "both_wrong_rate": 0.15
+      },
+      "evaluators": {
+        "classification_metrics": {
+          "version": "clsmetrics-1.0",
+          "config": {
+            "averaging": "macro",
+            "invalid_counts_as_wrong": true
+          }
+        }
+      }
+    }
+  },
+  "judge": {},
+  "reproducibility": {
+    "benchmark_package_version": "1.0.0",
+    "benchmark_version": "1.0.0",
+    "git_commit": null,
+    "git_dirty": null,
+    "python_version": "3.12.3",
+    "python_implementation": "CPython",
+    "platform": "Linux-6.8.0-47-generic-x86_64-with-glibc2.39",
+    "packages": {
+      "httpx": "0.28.1",
+      "pydantic": "2.13.5",
+      "sqlalchemy": "2.0.54",
+      "pandas": "3.0.5",
+      "numpy": "2.5.3",
+      "scikit-learn": "1.9.1",
+      "sacrebleu": "2.6.0",
+      "rouge-score": "0.1.2",
+      "bert-score": "not-installed",
+      "torch": "not-installed",
+      "transformers": "not-installed",
+      "typer": "0.27.2",
+      "rich": "15.0.0",
+      "tenacity": "not-installed",
+      "pyarrow": "25.0.1"
+    },
+    "captured_at": "2026-09-16T03:10:43+00:00",
+    "executed_at": "2026-09-16T03:10:43+00:00",
+    "api_provider": "openrouter",
+    "model_id": "mistralai/ministral-14b-2512",
+    "requested_model": "mistralai/ministral-14b-2512",
+    "alias_resolution": null,
+    "uses_alias": false,
+    "routing_config": {
+      "mode": "default",
+      "provider_order": null,
+      "allow_fallbacks": true,
+      "only": null,
+      "ignore": null,
+      "require_parameters": true,
+      "data_collection": "allow",
+      "sort": null,
+      "quantizations": null
+    },
+    "routing_config_hash": "cbe6fb9c14d4b2b12e690d6565e05bcf861c5db26cc56aef45e3e3810f67b298",
+    "reasoning_config": {
+      "enabled": false,
+      "effort": null,
+      "max_tokens": null,
+      "exclude": true
+    },
+    "generation": {
+      "version": "gen-1",
+      "temperature": 0.0,
+      "top_p": 1.0,
+      "seed": null,
+      "tools_enabled": false,
+      "web_search_enabled": false
+    },
+    "truncation_policy": {
+      "version": "trunc-1",
+      "summarization_max_source_tokens": 1800,
+      "hallucination_max_source_tokens": 1600,
+      "word_boundary": true
+    },
+    "prompt_versions": {
+      "summarization": "sum-1",
+      "hallucination": "halu-1",
+      "classification": "cls-1",
+      "judge": "judge-1"
+    },
+    "metric_versions": {
+      "rouge": "rouge-1.1",
+      "chrf": "chrf-1.0",
+      "bertscore": "bertscore-1.0",
+      "surface_facts": "surface-facts-1.1",
+      "classification_metrics": "clsmetrics-1.0",
+      "hallucination_metrics": "halumetrics-1.0"
+    },
+    "manifests": {
+      "summarization": {
+        "path": "xlsum_v1.jsonl",
+        "hash": "0135c4f4499e35dcde7855ad6afe33e333ebf2bca519a20b81257dc39150cd62",
+        "dataset_revision": "30fece425f9a3866e04321773ca7a80056d55ca6",
+        "counts": {
+          "en": 200,
+          "ko": 200,
+          "total": 400
+        }
+      },
+      "hallucination:en": {
+        "path": "halueval_summary_v1.jsonl",
+        "hash": "21debf696ed02ef001638142e2864a1bb58be409f88d8c86ad36e067ee609ca5",
+        "dataset_revision": "12a856119f03975a94509091e8cada3e6be6ead7",
+        "counts": {
+          "en": 400,
+          "total": 400
+        }
+      },
+      "hallucination:ko": {
+        "path": "aihub_summary_factuality_v1.jsonl",
+        "hash": "b49d914db700703584e2388f602808314a59c9e088a20f02e670ead58141fa96",
+        "dataset_revision": "local:Validation",
+        "counts": {
+          "ko": 400,
+          "total": 400
+        }
+      },
+      "classification": {
+        "path": "massive_v1.jsonl",
+        "hash": "1bebd7a4e6cab622b3a85e6f856e019c9459100085c08ca38ccec107d5e3ec21",
+        "dataset_revision": "940fd47a81eaa7f2cc7b129674d945d618ac38c2",
+        "counts": {
+          "en": 1000,
+          "ko": 1000,
+          "total": 2000
+        }
+      },
+      "judge": {
+        "path": "judge_xlsum_v1.jsonl",
+        "hash": "220531204ce53fe08cf0d0d7e8b0dd5084dec22ca0939287be1d4313cf690c51",
+        "dataset_revision": "30fece425f9a3866e04321773ca7a80056d55ca6",
+        "counts": {
+          "en": 100,
+          "ko": 100,
+          "total": 200
+        }
+      }
+    },
+    "pricing_snapshot": {
+      "model_id": "mistralai/ministral-14b-2512",
+      "input_per_million": 0.2,
+      "output_per_million": 0.2,
+      "cached_input_per_million": 0.02,
+      "retrieved_at": "2026-09-16T03:10:41+00:00",
+      "source": "openrouter"
+    }
+  }
+}

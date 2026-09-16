@@ -219,3 +219,13 @@ __marimo__/
 
 /data
 /aihub
+
+# --- benchmark artifacts -------------------------------------------------- #
+# results/ IS tracked on purpose: results/models/*/summary.json is the input the
+# "Update benchmark results" workflow regenerates RESULT.md and the workbook
+# from, and RESULT.md / results/benchmark_results.xlsx are the published output.
+#
+# /data and /aihub above stay ignored: the cache, the raw downloads and the
+# licence-gated AI-Hub data are all rebuilt locally by `benchmark prepare`.
+# Manifest hashes are recorded in RESULT.md and in each summary.json, so results
+# stay verifiable without redistributing the dataset text.

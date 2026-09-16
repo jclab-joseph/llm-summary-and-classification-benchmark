@@ -1,0 +1,632 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-16T03:50:51+00:00",
+  "run_id": "run-20260916T034334-aabaab2b",
+  "status": "COMPLETED",
+  "api_provider": "openrouter",
+  "model": {
+    "model_id": "deepseek/deepseek-v4-flash-0731",
+    "display_name": "DeepSeek V4 Flash 0731",
+    "vendor": "deepseek",
+    "safe_slug": "deepseek__deepseek-v4-flash-0731",
+    "max_output_tokens": 256,
+    "reasoning": {
+      "enabled": false,
+      "effort": null,
+      "max_tokens": null,
+      "exclude": true
+    },
+    "routing": {
+      "mode": "default",
+      "provider_order": null,
+      "allow_fallbacks": true,
+      "only": null,
+      "ignore": null,
+      "require_parameters": true,
+      "data_collection": "allow",
+      "sort": null,
+      "quantizations": null
+    },
+    "routing_config_hash": "cbe6fb9c14d4b2b12e690d6565e05bcf861c5db26cc56aef45e3e3810f67b298",
+    "uses_alias": false
+  },
+  "scope": {
+    "benchmarks": [
+      "summarization",
+      "hallucination",
+      "classification"
+    ],
+    "languages": [
+      "en",
+      "ko"
+    ],
+    "total_tasks": 1300,
+    "total_cases": 3200,
+    "skipped": {}
+  },
+  "cache": {
+    "cache_hits": 0,
+    "cache_misses": 1300,
+    "openrouter_api_calls": 1300,
+    "openrouter_http_attempts": 1300,
+    "metric_cache": {
+      "hits": 0,
+      "misses": 2500
+    }
+  },
+  "usage": {
+    "prompt_tokens": 1190712,
+    "cached_tokens": 369477,
+    "cache_write_tokens": 0,
+    "completion_tokens": 63519,
+    "reasoning_tokens": 0,
+    "total_tokens": 1254231,
+    "successful_cases": 1300
+  },
+  "cost": {
+    "pricing_snapshot": {
+      "model_id": "deepseek/deepseek-v4-flash-0731",
+      "input_per_million": 0.055,
+      "output_per_million": 0.11,
+      "cached_input_per_million": 0.011,
+      "retrieved_at": "2026-09-16T03:43:32+00:00",
+      "source": "openrouter"
+    },
+    "authoritative_source": "openrouter usage.cost",
+    "by_benchmark": {
+      "classification": 0.0058211827,
+      "hallucination": 0.047342058692,
+      "summarization": 0.034535950611
+    },
+    "summarization_cost": 0.034535950611,
+    "hallucination_cost": 0.047342058692,
+    "classification_cost": 0.0058211827,
+    "retry_error_cost": 0,
+    "judge_cost": 0.0,
+    "total_openrouter_cost": 0.087699192003,
+    "fresh_cost_this_run": 0.08769919200300014,
+    "stored_benchmark_cost": 0.087699192003,
+    "estimated_cost_without_cache": 0.08769919200300014,
+    "estimated_cache_savings": 0.0,
+    "attempts": {
+      "by_status": {
+        "SUCCESS": {
+          "count": 1300,
+          "usage_cost": 0.087699192003
+        }
+      },
+      "success_attempts": 1300,
+      "success_cost": 0.087699192003,
+      "error_attempts": 0,
+      "error_cost": 0,
+      "total_attempts": 1300,
+      "total_cost": 0.087699192003
+    },
+    "reconciliation": {
+      "recomputed_from_pricing_table": 0.056219262000000006,
+      "actual_usage_cost": 0.087699192003,
+      "difference": 0.03147993000299999,
+      "relative_difference": 0.3589534781794014,
+      "matches_within_tolerance": false,
+      "authoritative": "openrouter usage.cost"
+    }
+  },
+  "failures": {},
+  "failure_guard": {
+    "enabled": true,
+    "tripped": false,
+    "reason": null,
+    "attempts": 1300,
+    "failures": 0,
+    "failure_rate": 0.0,
+    "consecutive_failures": 0,
+    "status_counts": {},
+    "top_errors": [],
+    "first_failure": null
+  },
+  "preflight": {
+    "checked": true,
+    "supported_parameters": [
+      "frequency_penalty",
+      "include_reasoning",
+      "logit_bias",
+      "logprobs",
+      "max_tokens",
+      "min_p",
+      "parallel_tool_calls",
+      "presence_penalty",
+      "reasoning",
+      "reasoning_effort",
+      "repetition_penalty",
+      "response_format",
+      "seed",
+      "stop",
+      "structured_outputs",
+      "temperature",
+      "tool_choice",
+      "tools",
+      "top_a",
+      "top_k",
+      "top_logprobs",
+      "top_p"
+    ],
+    "sending": [
+      "reasoning",
+      "temperature",
+      "top_p"
+    ],
+    "blocking": [],
+    "informational": [],
+    "require_parameters": true
+  },
+  "skipped": {
+    "by_failure_guard": 0,
+    "by_budget": 0
+  },
+  "log_path": "/home/joseph/jcworkspace/llm-summary-and-classification-benchmark/data/logs/benchmark-20260916T025908.log",
+  "notes": [],
+  "metrics": {
+    "summarization": {
+      "benchmark": "summarization",
+      "version": "1.0.0",
+      "manifest_hash": "0135c4f4499e35dcde7855ad6afe33e333ebf2bca519a20b81257dc39150cd62",
+      "dataset_revision": "30fece425f9a3866e04321773ca7a80056d55ca6",
+      "per_language": {
+        "en": {
+          "cases": 200,
+          "scored_cases": 200,
+          "failed_cases": 0,
+          "rouge1_f": 0.2074198476694383,
+          "rouge2_f": 0.05004754104041525,
+          "rougeLsum_f": 0.1602129689146955,
+          "chrf": 26.389688436061576,
+          "bertscore_f1": null,
+          "bertscore_scored_cases": 0,
+          "surface_fact_support_precision": 0.8983156581409857,
+          "compression_ratio": 0.24077860348528302,
+          "output_tokens_mean": 98.23,
+          "output_chars_mean": 463.14,
+          "empty_output_rate": 0.0,
+          "refusal_rate": 0.0,
+          "surface_fact_diagnostic": {
+            "diagnostic": true,
+            "note": "Surface-level check only; not a complete hallucination metric.",
+            "facts_total": 1603,
+            "facts_supported": 1440,
+            "surface_fact_support_precision": 0.8983156581409857,
+            "summaries_with_facts": 199,
+            "number_mismatch": 5,
+            "percentage_mismatch": 0,
+            "date_mismatch": 1,
+            "currency_mismatch": 1,
+            "unsupported_named_entity": 156,
+            "per_category": {
+              "number": {
+                "total": 188,
+                "supported": 183,
+                "support_rate": 0.973404255319149
+              },
+              "percentage": {
+                "total": 47,
+                "supported": 47,
+                "support_rate": 1.0
+              },
+              "date": {
+                "total": 111,
+                "supported": 110,
+                "support_rate": 0.990990990990991
+              },
+              "currency": {
+                "total": 48,
+                "supported": 47,
+                "support_rate": 0.9791666666666666
+              },
+              "entity": {
+                "total": 1209,
+                "supported": 1053,
+                "support_rate": 0.8709677419354839
+              }
+            }
+          }
+        },
+        "ko": {
+          "cases": 200,
+          "scored_cases": 200,
+          "failed_cases": 0,
+          "rouge1_f": 0.29104759762095717,
+          "rouge2_f": 0.12784816892963943,
+          "rougeLsum_f": 0.2187402179219718,
+          "chrf": 13.347341488001154,
+          "bertscore_f1": null,
+          "bertscore_scored_cases": 0,
+          "surface_fact_support_precision": 0.958904109589041,
+          "compression_ratio": 0.16191755903845675,
+          "output_tokens_mean": 103.15,
+          "output_chars_mean": 212.84,
+          "empty_output_rate": 0.0,
+          "refusal_rate": 0.0,
+          "surface_fact_diagnostic": {
+            "diagnostic": true,
+            "note": "Surface-level check only; not a complete hallucination metric.",
+            "facts_total": 876,
+            "facts_supported": 840,
+            "surface_fact_support_precision": 0.958904109589041,
+            "summaries_with_facts": 192,
+            "number_mismatch": 10,
+            "percentage_mismatch": 0,
+            "date_mismatch": 6,
+            "currency_mismatch": 0,
+            "unsupported_named_entity": 20,
+            "per_category": {
+              "number": {
+                "total": 453,
+                "supported": 443,
+                "support_rate": 0.977924944812362
+              },
+              "percentage": {
+                "total": 32,
+                "supported": 32,
+                "support_rate": 1.0
+              },
+              "date": {
+                "total": 134,
+                "supported": 128,
+                "support_rate": 0.9552238805970149
+              },
+              "currency": {
+                "total": 29,
+                "supported": 29,
+                "support_rate": 1.0
+              },
+              "entity": {
+                "total": 228,
+                "supported": 208,
+                "support_rate": 0.9122807017543859
+              }
+            }
+          }
+        }
+      },
+      "evaluators": {
+        "rouge": {
+          "version": "rouge-1.1",
+          "config": {
+            "tokenizer": "multilingual-v1",
+            "use_stemmer": false,
+            "variants": [
+              "rouge1",
+              "rouge2",
+              "rougeLsum"
+            ]
+          }
+        },
+        "chrf": {
+          "version": "chrf-1.0",
+          "config": {
+            "word_order": 2,
+            "char_order": 6,
+            "beta": 2
+          }
+        },
+        "surface_facts": {
+          "version": "surface-facts-1.1",
+          "config": {
+            "version": "surface-facts-1.1",
+            "check_numbers": true,
+            "check_percentages": true,
+            "check_dates": true,
+            "check_currency": true,
+            "check_entities": true,
+            "numeric_tolerance": 0.0
+          }
+        },
+        "bertscore": {
+          "enabled": true,
+          "available": false,
+          "model_type": "bert-base-multilingual-cased",
+          "num_layers": 9,
+          "version": "bertscore-1.0",
+          "unavailable_reason": "bert-score is not installed; run `uv sync --extra bertscore` to enable it"
+        }
+      }
+    },
+    "hallucination": {
+      "benchmark": "hallucination",
+      "version": "1.0.0",
+      "manifest_hashes": {
+        "en": "21debf696ed02ef001638142e2864a1bb58be409f88d8c86ad36e067ee609ca5",
+        "ko": "b49d914db700703584e2388f602808314a59c9e088a20f02e670ead58141fa96"
+      },
+      "per_language": {
+        "en": {
+          "cases": 400,
+          "scored_cases": 400,
+          "failed_cases": 0,
+          "valid_outputs": 400,
+          "invalid_outputs": 0,
+          "invalid_output_rate": 0.0,
+          "accuracy": 0.7225,
+          "macro_f1": 0.7224843897469233,
+          "hallucination_precision": 0.7258883248730964,
+          "hallucination_recall": 0.715,
+          "hallucination_f1": 0.7204030226700252,
+          "supported_recall": 0.73,
+          "supported_precision": 0.7192118226600985,
+          "supported_f1": 0.7245657568238213,
+          "per_class": {
+            "SUPPORTED": {
+              "precision": 0.7192118226600985,
+              "recall": 0.73,
+              "f1": 0.7245657568238213,
+              "support": 200,
+              "tp": 146,
+              "fp": 57,
+              "fn": 54
+            },
+            "HALLUCINATED": {
+              "precision": 0.7258883248730964,
+              "recall": 0.715,
+              "f1": 0.7204030226700252,
+              "support": 200,
+              "tp": 143,
+              "fp": 54,
+              "fn": 57
+            }
+          },
+          "status": "OK",
+          "documents": 200
+        },
+        "ko": {
+          "cases": 400,
+          "scored_cases": 400,
+          "failed_cases": 0,
+          "valid_outputs": 399,
+          "invalid_outputs": 1,
+          "invalid_output_rate": 0.0025,
+          "accuracy": 0.63,
+          "macro_f1": 0.6292401414744049,
+          "hallucination_precision": 0.6150442477876106,
+          "hallucination_recall": 0.695,
+          "hallucination_f1": 0.6525821596244131,
+          "supported_recall": 0.565,
+          "supported_precision": 0.653179190751445,
+          "supported_f1": 0.6058981233243967,
+          "per_class": {
+            "SUPPORTED": {
+              "precision": 0.653179190751445,
+              "recall": 0.565,
+              "f1": 0.6058981233243967,
+              "support": 200,
+              "tp": 113,
+              "fp": 60,
+              "fn": 87
+            },
+            "HALLUCINATED": {
+              "precision": 0.6150442477876106,
+              "recall": 0.695,
+              "f1": 0.6525821596244131,
+              "support": 200,
+              "tp": 139,
+              "fp": 87,
+              "fn": 61
+            }
+          },
+          "status": "OK",
+          "documents": 200
+        }
+      },
+      "evaluators": {
+        "hallucination_metrics": {
+          "version": "halumetrics-1.0",
+          "config": {
+            "labels": [
+              "SUPPORTED",
+              "HALLUCINATED"
+            ],
+            "positive_class": "HALLUCINATED"
+          }
+        }
+      }
+    },
+    "classification": {
+      "benchmark": "classification",
+      "version": "1.0.0",
+      "manifest_hash": "1bebd7a4e6cab622b3a85e6f856e019c9459100085c08ca38ccec107d5e3ec21",
+      "dataset_revision": "940fd47a81eaa7f2cc7b129674d945d618ac38c2",
+      "label_space_size": 60,
+      "batch_size": 20,
+      "per_language": {
+        "en": {
+          "cases": 1000,
+          "accuracy": 0.803,
+          "macro_f1": 0.7737251717218584,
+          "correct": 803,
+          "invalid_outputs": 0,
+          "invalid_output_rate": 0.0,
+          "failed_cases": 0,
+          "label_space_size": 60
+        },
+        "ko": {
+          "cases": 1000,
+          "accuracy": 0.802,
+          "macro_f1": 0.7760490357248214,
+          "correct": 802,
+          "invalid_outputs": 0,
+          "invalid_output_rate": 0.0,
+          "failed_cases": 0,
+          "label_space_size": 60
+        }
+      },
+      "overall": {
+        "cases": 2000,
+        "accuracy": 0.8025,
+        "macro_f1": 0.7750244596849166,
+        "correct": 1605,
+        "invalid_outputs": 0,
+        "invalid_output_rate": 0.0,
+        "failed_cases": 0,
+        "label_space_size": 60
+      },
+      "cross_lingual": {
+        "paired_cases": 1000,
+        "prediction_agreement": 0.799,
+        "consistency": 0.851,
+        "both_correct": 728,
+        "both_correct_rate": 0.728,
+        "en_only_correct": 75,
+        "en_only_correct_rate": 0.075,
+        "ko_only_correct": 74,
+        "ko_only_correct_rate": 0.074,
+        "both_wrong": 123,
+        "both_wrong_rate": 0.123
+      },
+      "evaluators": {
+        "classification_metrics": {
+          "version": "clsmetrics-1.0",
+          "config": {
+            "averaging": "macro",
+            "invalid_counts_as_wrong": true
+          }
+        }
+      }
+    }
+  },
+  "judge": {},
+  "reproducibility": {
+    "benchmark_package_version": "1.0.0",
+    "benchmark_version": "1.0.0",
+    "git_commit": null,
+    "git_dirty": null,
+    "python_version": "3.12.3",
+    "python_implementation": "CPython",
+    "platform": "Linux-6.8.0-47-generic-x86_64-with-glibc2.39",
+    "packages": {
+      "httpx": "0.28.1",
+      "pydantic": "2.13.5",
+      "sqlalchemy": "2.0.54",
+      "pandas": "3.0.5",
+      "numpy": "2.5.3",
+      "scikit-learn": "1.9.1",
+      "sacrebleu": "2.6.0",
+      "rouge-score": "0.1.2",
+      "bert-score": "not-installed",
+      "torch": "not-installed",
+      "transformers": "not-installed",
+      "typer": "0.27.2",
+      "rich": "15.0.0",
+      "tenacity": "not-installed",
+      "pyarrow": "25.0.1"
+    },
+    "captured_at": "2026-09-16T03:43:34+00:00",
+    "executed_at": "2026-09-16T03:43:34+00:00",
+    "api_provider": "openrouter",
+    "model_id": "deepseek/deepseek-v4-flash-0731",
+    "requested_model": "deepseek/deepseek-v4-flash-0731",
+    "alias_resolution": null,
+    "uses_alias": false,
+    "routing_config": {
+      "mode": "default",
+      "provider_order": null,
+      "allow_fallbacks": true,
+      "only": null,
+      "ignore": null,
+      "require_parameters": true,
+      "data_collection": "allow",
+      "sort": null,
+      "quantizations": null
+    },
+    "routing_config_hash": "cbe6fb9c14d4b2b12e690d6565e05bcf861c5db26cc56aef45e3e3810f67b298",
+    "reasoning_config": {
+      "enabled": false,
+      "effort": null,
+      "max_tokens": null,
+      "exclude": true
+    },
+    "generation": {
+      "version": "gen-1",
+      "temperature": 0.0,
+      "top_p": 1.0,
+      "seed": null,
+      "tools_enabled": false,
+      "web_search_enabled": false
+    },
+    "truncation_policy": {
+      "version": "trunc-1",
+      "summarization_max_source_tokens": 1800,
+      "hallucination_max_source_tokens": 1600,
+      "word_boundary": true
+    },
+    "prompt_versions": {
+      "summarization": "sum-1",
+      "hallucination": "halu-1",
+      "classification": "cls-1",
+      "judge": "judge-1"
+    },
+    "metric_versions": {
+      "rouge": "rouge-1.1",
+      "chrf": "chrf-1.0",
+      "bertscore": "bertscore-1.0",
+      "surface_facts": "surface-facts-1.1",
+      "classification_metrics": "clsmetrics-1.0",
+      "hallucination_metrics": "halumetrics-1.0"
+    },
+    "manifests": {
+      "summarization": {
+        "path": "xlsum_v1.jsonl",
+        "hash": "0135c4f4499e35dcde7855ad6afe33e333ebf2bca519a20b81257dc39150cd62",
+        "dataset_revision": "30fece425f9a3866e04321773ca7a80056d55ca6",
+        "counts": {
+          "en": 200,
+          "ko": 200,
+          "total": 400
+        }
+      },
+      "hallucination:en": {
+        "path": "halueval_summary_v1.jsonl",
+        "hash": "21debf696ed02ef001638142e2864a1bb58be409f88d8c86ad36e067ee609ca5",
+        "dataset_revision": "12a856119f03975a94509091e8cada3e6be6ead7",
+        "counts": {
+          "en": 400,
+          "total": 400
+        }
+      },
+      "hallucination:ko": {
+        "path": "aihub_summary_factuality_v1.jsonl",
+        "hash": "b49d914db700703584e2388f602808314a59c9e088a20f02e670ead58141fa96",
+        "dataset_revision": "local:Validation",
+        "counts": {
+          "ko": 400,
+          "total": 400
+        }
+      },
+      "classification": {
+        "path": "massive_v1.jsonl",
+        "hash": "1bebd7a4e6cab622b3a85e6f856e019c9459100085c08ca38ccec107d5e3ec21",
+        "dataset_revision": "940fd47a81eaa7f2cc7b129674d945d618ac38c2",
+        "counts": {
+          "en": 1000,
+          "ko": 1000,
+          "total": 2000
+        }
+      },
+      "judge": {
+        "path": "judge_xlsum_v1.jsonl",
+        "hash": "220531204ce53fe08cf0d0d7e8b0dd5084dec22ca0939287be1d4313cf690c51",
+        "dataset_revision": "30fece425f9a3866e04321773ca7a80056d55ca6",
+        "counts": {
+          "en": 100,
+          "ko": 100,
+          "total": 200
+        }
+      }
+    },
+    "pricing_snapshot": {
+      "model_id": "deepseek/deepseek-v4-flash-0731",
+      "input_per_million": 0.055,
+      "output_per_million": 0.11,
+      "cached_input_per_million": 0.011,
+      "retrieved_at": "2026-09-16T03:43:32+00:00",
+      "source": "openrouter"
+    }
+  }
+}

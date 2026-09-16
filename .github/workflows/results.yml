@@ -1,0 +1,104 @@
+name: Update benchmark results
+
+# Runs when a model's results land in the repository, and regenerates the
+# derived artifacts (RESULT.md, the spreadsheet, the leaderboard files) from
+# them. Only `results/models/**/summary.json` is an input; the generated files
+# are deliberately NOT triggers, so the commit this workflow pushes cannot
+# trigger it again. (A push made with GITHUB_TOKEN does not start workflows
+# either, so that is belt and braces.)
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'results/models/**/summary.json'
+      - 'config/models.yaml'
+      - 'config/pricing.yaml'
+      - 'src/llmbench/reporting/**'
+      - '.github/workflows/results.yml'
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Commit and push the regenerated files'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: benchmark-results-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  regenerate:
+    name: Regenerate RESULT.md and the workbook
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          # A full history keeps `git log` meaningful for the generated commit.
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: 'uv.lock'
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Verify the report generators
+        # A broken generator would otherwise commit a silently wrong RESULT.md.
+        run: uv run pytest tests/test_reporting.py -q
+
+      - name: Regenerate the reports
+        # `benchmark report` reads results/models/*/summary.json only: no network,
+        # no OpenRouter key and no cost.
+        run: uv run benchmark report
+
+      - name: Show what changed
+        run: git --no-pager diff --stat -- RESULT.md results/
+
+      - name: Upload the artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            RESULT.md
+            results/benchmark_results.xlsx
+            results/leaderboard.csv
+            results/leaderboard.json
+            results/leaderboard.md
+            results/report.html
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Commit and push
+        if: github.event_name != 'workflow_dispatch' || inputs.commit
+        env:
+          GENERATED_FILES: >-
+            RESULT.md
+            results/benchmark_results.xlsx
+            results/leaderboard.csv
+            results/leaderboard.json
+            results/leaderboard.md
+            results/report.html
+        run: |
+          set -euo pipefail
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- $GENERATED_FILES
+          if git diff --cached --quiet; then
+            echo 'Reports are already up to date; nothing to commit.'
+            exit 0
+          fi
+          models=$(ls results/models 2>/dev/null | wc -l)
+          git commit -m "chore(results): regenerate RESULT.md and workbook (${models} models) [skip ci]"
+          git push

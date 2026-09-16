@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM Benchmark Report</title>
+<style>
+:root {
+  --bg: #ffffff; --fg: #16181d; --muted: #5b6270; --line: #e3e6ec;
+  --accent: #2f5fd0; --chip: #f2f4f8; --warn: #a2620a;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #14161a; --fg: #e8eaee; --muted: #9aa3b2; --line: #2a2e36;
+          --accent: #7aa2f7; --chip: #1e222a; --warn: #e0a458; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; padding: 32px 16px 64px; background: var(--bg); color: var(--fg);
+  font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif; }
+main { max-width: 1180px; margin: 0 auto; }
+h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 40px 0 10px; }
+h3 { font-size: 15px; margin: 22px 0 6px; }
+p.sub { color: var(--muted); margin: 0 0 20px; }
+.note { background: var(--chip); border-left: 3px solid var(--accent); padding: 10px 14px;
+  border-radius: 6px; margin: 16px 0; color: var(--muted); font-size: 13.5px; }
+.warn { border-left-color: var(--warn); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin: 8px 0 4px; }
+th, td { border-bottom: 1px solid var(--line); padding: 7px 9px; text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th { color: var(--muted); font-weight: 600; border-bottom: 2px solid var(--line); }
+tbody tr:hover { background: var(--chip); }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.chip { display: inline-block; background: var(--chip); border-radius: 999px; padding: 2px 10px;
+  font-size: 12px; color: var(--muted); margin-right: 6px; }
+.kv { display: grid; grid-template-columns: minmax(180px, 280px) 1fr; gap: 2px 16px; font-size: 13.5px; }
+.kv div:nth-child(odd) { color: var(--muted); }
+details { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 10px 0; }
+summary { cursor: pointer; font-weight: 600; }
+footer { margin-top: 48px; color: var(--muted); font-size: 12.5px; }
+@media (max-width: 640px) { body { padding: 20px 16px 48px; } .kv { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+<h1>LLM Summarization / Hallucination / Classification Benchmark</h1>
+<p class="sub">Generated 2026-09-16T04:09:51+00:00 &middot; every model called through OpenRouter</p>
+
+<div class="note">
+Costs shown are the authoritative <code>usage.cost</code> values returned by OpenRouter.
+Pricing-table figures are estimates used for budgeting only. Surface fact support is a
+<strong>diagnostic</strong>, not a complete hallucination metric.
+</div>
+
+<h2>Leaderboard</h2>
+<div class="scroll"><table><thead><tr><th>Model</th><th>Input $/M</th><th>Output $/M</th><th>Summary EN</th><th>Summary KO</th><th>Halu EN F1</th><th>Halu KO F1</th><th>Classification EN</th><th>Classification KO</th><th>EN-KO Consistency</th><th>Input Tokens</th><th>Output Tokens</th><th>OpenRouter Cost</th><th>Judge Cost</th></tr></thead><tbody><tr><td>google/gemini-2.5-flash-lite</td><td>0.1000</td><td>0.4000</td><td>0.1401</td><td>0.2298</td><td>0.4604</td><td>0.5353</td><td>0.0080</td><td>0.0130</td><td>0.9790</td><td>844,524</td><td>24,718</td><td>0.094340</td><td>0.000000</td></tr></tbody></table></div>
+
+<h2>Model detail</h2>
+<section><h3>google/gemini-2.5-flash-lite</h3><p><span class="chip">status: COMPLETED</span><span class="chip">run: run-20260916T040949-8060316b</span><span class="chip">api: openrouter</span></p><h4>OpenRouter Pricing Snapshot</h4><div class="kv"><div>Input $/M</div><div>0.100000</div><div>Cached Input $/M</div><div>0.025000</div><div>Output $/M</div><div>0.400000</div><div>Pricing retrieved at</div><div>2026-09-16T04:09:48+00:00</div><div>Pricing source</div><div>openrouter</div></div><h4>Actual Usage</h4><div class="kv"><div>Prompt Tokens</div><div>844,524</div><div>Cached Tokens</div><div>0</div><div>Cache Write Tokens</div><div>0</div><div>Completion Tokens</div><div>24,718</div><div>Reasoning Tokens</div><div>0</div><div>Total Tokens</div><div>869,242</div></div><h4>Actual Cost (OpenRouter usage.cost)</h4><div class="kv"><div>Summarization cost</div><div>0.031904</div><div>Hallucination cost</div><div>0.056225</div><div>Classification cost</div><div>0.006210</div><div>Retry/error cost</div><div>0</div><div>Judge cost</div><div>0.000000</div><div>Total OpenRouter cost</div><div>0.094340</div><div>Fresh cost this run</div><div>0.000000</div><div>Stored benchmark cost</div><div>0.094340</div><div>Estimated cost without cache</div><div>0.094340</div><div>Estimated cache savings</div><div>0.094340</div></div><h4>Summarization</h4><div class="scroll"><table><thead><tr><th>Metric</th><th>EN</th><th>KO</th></tr></thead><tbody><tr><td>ROUGE-Lsum</td><td>0.1401</td><td>0.2298</td></tr><tr><td>BERTScore F1</td><td>—</td><td>—</td></tr><tr><td>chrF++</td><td>22.5012</td><td>12.4257</td></tr><tr><td>Surface Fact Support (diagnostic)</td><td>1.0000</td><td>1.0000</td></tr><tr><td>Compression ratio</td><td>0.1316</td><td>0.1147</td></tr><tr><td>Output tokens (mean)</td><td>51.7000</td><td>71.7800</td></tr><tr><td>Empty output rate</td><td>0.0000</td><td>0.0000</td></tr><tr><td>Refusal rate</td><td>0.0000</td><td>0.0000</td></tr></tbody></table></div><h4>Hallucination</h4><div class="scroll"><table><thead><tr><th>Metric</th><th>EN</th><th>KO</th></tr></thead><tbody><tr><td>Accuracy</td><td>0.4725</td><td>0.5225</td></tr><tr><td>Macro-F1</td><td>0.4722</td><td>0.5221</td></tr><tr><td>Hallucination Precision</td><td>0.4712</td><td>0.5213</td></tr><tr><td>Hallucination Recall</td><td>0.4500</td><td>0.5500</td></tr><tr><td>Hallucination F1</td><td>0.4604</td><td>0.5353</td></tr><tr><td>Supported Recall</td><td>0.4950</td><td>0.4950</td></tr><tr><td>Invalid output rate</td><td>0.0000</td><td>0.0000</td></tr><tr><td>Status</td><td>OK</td><td>OK</td></tr></tbody></table></div><h4>Classification</h4><div class="scroll"><table><thead><tr><th>Metric</th><th>EN</th><th>KO</th></tr></thead><tbody><tr><td>Accuracy</td><td>0.0080</td><td>0.0130</td></tr><tr><td>Macro-F1</td><td>0.0081</td><td>0.0121</td></tr><tr><td>Invalid output rate</td><td>0.0000</td><td>0.0000</td></tr></tbody></table></div><h4>Cross-lingual (EN/KO paired)</h4><div class="kv"><div>Paired cases</div><div>1,000</div><div>Consistency</div><div>0.9790</div><div>Prediction agreement</div><div>0.0210</div><div>Both correct</div><div>0.0000</div><div>EN only correct</div><div>0.0080</div><div>KO only correct</div><div>0.0130</div><div>Both wrong</div><div>0.9790</div></div><details><summary>Reproducibility</summary><pre>{
+  &quot;benchmark_package_version&quot;: &quot;1.0.0&quot;,
+  &quot;benchmark_version&quot;: &quot;1.0.0&quot;,
+  &quot;git_commit&quot;: &quot;1a5b74b324b529b0e48679bff73ef485a6d623f3&quot;,
+  &quot;git_dirty&quot;: true,
+  &quot;python_version&quot;: &quot;3.12.3&quot;,
+  &quot;python_implementation&quot;: &quot;CPython&quot;,
+  &quot;platform&quot;: &quot;Linux-6.8.0-47-generic-x86_64-with-glibc2.39&quot;,
+  &quot;packages&quot;: {
+    &quot;httpx&quot;: &quot;0.28.1&quot;,
+    &quot;pydantic&quot;: &quot;2.13.5&quot;,
+    &quot;sqlalchemy&quot;: &quot;2.0.54&quot;,
+    &quot;pandas&quot;: &quot;3.0.5&quot;,
+    &quot;numpy&quot;: &quot;2.5.3&quot;,
+    &quot;scikit-learn&quot;: &quot;1.9.1&quot;,
+    &quot;sacrebleu&quot;: &quot;2.6.0&quot;,
+    &quot;rouge-score&quot;: &quot;0.1.2&quot;,
+    &quot;bert-score&quot;: &quot;not-installed&quot;,
+    &quot;torch&quot;: &quot;not-installed&quot;,
+    &quot;transformers&quot;: &quot;not-installed&quot;,
+    &quot;typer&quot;: &quot;0.27.2&quot;,
+    &quot;rich&quot;: &quot;15.0.0&quot;,
+    &quot;tenacity&quot;: &quot;not-installed&quot;,
+    &quot;pyarrow&quot;: &quot;25.0.1&quot;
+  },
+  &quot;captured_at&quot;: &quot;2026-09-16T04:09:49+00:00&quot;,
+  &quot;executed_at&quot;: &quot;2026-09-16T04:09:49+00:00&quot;,
+  &quot;api_provider&quot;: &quot;openrouter&quot;,
+  &quot;model_id&quot;: &quot;google/gemini-2.5-flash-lite&quot;,
+  &quot;requested_model&quot;: &quot;google/gemini-2.5-flash-lite&quot;,
+  &quot;alias_resolution&quot;: null,
+  &quot;uses_alias&quot;: false,
+  &quot;routing_config&quot;: {
+    &quot;mode&quot;: &quot;default&quot;,
+    &quot;provider_order&quot;: null,
+    &quot;allow_fallbacks&quot;: true,
+    &quot;only&quot;: null,
+    &quot;ignore&quot;: null,
+    &quot;require_parameters&quot;: true,
+    &quot;data_collection&quot;: &quot;allow&quot;,
+    &quot;sort&quot;: null,
+    &quot;quantizations&quot;: null
+  },
+  &quot;routing_config_hash&quot;: &quot;cbe6fb9c14d4b2b12e690d6565e05bcf861c5db26cc56aef45e3e3810f67b298&quot;,
+  &quot;reasoning_config&quot;: {
+    &quot;enabled&quot;: false,
+    &quot;effort&quot;: null,
+    &quot;max_tokens&quot;: null,
+    &quot;exclude&quot;: true
+  },
+  &quot;generation&quot;: {
+    &quot;version&quot;: &quot;gen-1&quot;,
+    &quot;temperature&quot;: 0.0,
+    &quot;top_p&quot;: 1.0,
+    &quot;seed&quot;: null,
+    &quot;tools_enabled&quot;: false,
+    &quot;web_search_enabled&quot;: false
+  },
+  &quot;truncation_policy&quot;: {
+    &quot;version&quot;: &quot;trunc-1&quot;,
+    &quot;summarization_max_source_tokens&quot;: 1800,
+    &quot;hallucination_max_source_tokens&quot;: 1600,
+    &quot;word_boundary&quot;: true
+  },
+  &quot;prompt_versions&quot;: {
+    &quot;summarization&quot;: &quot;sum-1&quot;,
+    &quot;hallucination&quot;: &quot;halu-1&quot;,
+    &quot;classification&quot;: &quot;cls-1&quot;,
+    &quot;judge&quot;: &quot;judge-1&quot;
+  },
+  &quot;metric_versions&quot;: {
+    &quot;rouge&quot;: &quot;rouge-1.1&quot;,
+    &quot;chrf&quot;: &quot;chrf-1.0&quot;,
+    &quot;bertscore&quot;: &quot;bertscore-1.0&quot;,
+    &quot;surface_facts&quot;: &quot;surface-facts-1.1&quot;,
+    &quot;classification_metrics&quot;: &quot;clsmetrics-1.0&quot;,
+    &quot;hallucination_metrics&quot;: &quot;halumetrics-1.0&quot;
+  },
+  &quot;manifests&quot;: {
+    &quot;summarization&quot;: {
+      &quot;path&quot;: &quot;xlsum_v1.jsonl&quot;,
+      &quot;hash&quot;: &quot;0135c4f4499e35dcde7855ad6afe33e333ebf2bca519a20b81257dc39150cd62&quot;,
+      &quot;dataset_revision&quot;: &quot;30fece425f9a3866e04321773ca7a80056d55ca6&quot;,
+      &quot;counts&quot;: {
+        &quot;en&quot;: 200,
+        &quot;ko&quot;: 200,
+        &quot;total&quot;: 400
+      }
+    },
+    &quot;hallucination:en&quot;: {
+      &quot;path&quot;: &quot;halueval_summary_v1.jsonl&quot;,
+      &quot;hash&quot;: &quot;21debf696ed02ef001638142e2864a1bb58be409f88d8c86ad36e067ee609ca5&quot;,
+      &quot;dataset_revision&quot;: &quot;12a856119f03975a94509091e8cada3e6be6ead7&quot;,
+      &quot;counts&quot;: {
+        &quot;en&quot;: 400,
+        &quot;total&quot;: 400
+      }
+    },
+    &quot;hallucination:ko&quot;: {
+      &quot;path&quot;: &quot;aihub_summary_factuality_v1.jsonl&quot;,
+      &quot;hash&quot;: &quot;b49d914db700703584e2388f602808314a59c9e088a20f02e670ead58141fa96&quot;,
+      &quot;dataset_revision&quot;: &quot;local:Validation&quot;,
+      &quot;counts&quot;: {
+        &quot;ko&quot;: 400,
+        &quot;total&quot;: 400
+      }
+    },
+    &quot;classification&quot;: {
+      &quot;path&quot;: &quot;massive_v1.jsonl&quot;,
+      &quot;hash&quot;: &quot;1bebd7a4e6cab622b3a85e6f856e019c9459100085c08ca38ccec107d5e3ec21&quot;,
+      &quot;dataset_revision&quot;: &quot;940fd47a81eaa7f2cc7b129674d945d618ac38c2&quot;,
+      &quot;counts&quot;: {
+        &quot;en&quot;: 1000,
+        &quot;ko&quot;: 1000,
+        &quot;total&quot;: 2000
+      }
+    },
+    &quot;judge&quot;: {
+      &quot;path&quot;: &quot;judge_xlsum_v1.jsonl&quot;,
+      &quot;hash&quot;: &quot;220531204ce53fe08cf0d0d7e8b0dd5084dec22ca0939287be1d4313cf690c51&quot;,
+      &quot;dataset_revision&quot;: &quot;30fece425f9a3866e04321773ca7a80056d55ca6&quot;,
+      &quot;counts&quot;: {
+        &quot;en&quot;: 100,
+        &quot;ko&quot;: 100,
+        &quot;total&quot;: 200
+      }
+    }
+  },
+  &quot;pricing_snapshot&quot;: {
+    &quot;model_id&quot;: &quot;google/gemini-2.5-flash-lite&quot;,
+    &quot;input_per_million&quot;: 0.1,
+    &quot;output_per_million&quot;: 0.4,
+    &quot;cached_input_per_million&quot;: 0.025,
+    &quot;retrieved_at&quot;: &quot;2026-09-16T04:09:48+00:00&quot;,
+    &quot;source&quot;: &quot;openrouter&quot;
+  }
+}</pre></details></section>
+
+<footer>
+Different metric families are reported separately by design; this report never combines
+them into a single composite score.
+</footer>
+</main>
+</body>
+</html>

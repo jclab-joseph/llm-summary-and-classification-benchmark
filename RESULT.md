@@ -2,7 +2,7 @@
 
 <!-- 이 파일은 `benchmark report` 가 자동 생성합니다. 직접 수정하지 마세요. -->
 
-생성: `2026-09-16T04:04:54+00:00` · benchmark version `1.0.0` · API provider: **OpenRouter**
+생성: `2026-09-16T04:33:10+00:00` · benchmark version `1.0.0` · API provider: **OpenRouter**
 
 같은 데이터를 담은 스프레드시트: [`results/benchmark_results.xlsx`](results/benchmark_results.xlsx)
 

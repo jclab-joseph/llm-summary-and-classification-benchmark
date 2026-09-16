@@ -357,6 +357,7 @@ benchmark run --model mistralai/ministral-8b-2512 --language ko
 | `--skip-preflight` | 모델이 거부하는 파라미터가 있어도 강행 |
 | `-v` / `-vv` | 콘솔 로그를 INFO / DEBUG 로 |
 | `--log-file PATH` | 로그 파일 위치 변경 |
+| `--no-report` | 끝난 뒤 RESULT.md / 스프레드시트를 갱신하지 않음 |
 
 ### Dry run
 
@@ -591,7 +592,9 @@ benchmark report
 다음을 생성합니다.
 
 ```
+RESULT.md                                   사람이 읽는 결과 문서 (자동 생성)
 results/
+  benchmark_results.xlsx                    같은 데이터를 담은 스프레드시트
   leaderboard.csv
   leaderboard.json
   leaderboard.md
@@ -599,7 +602,59 @@ results/
   models/{safe_model_slug}/summary.json     예: google__gemini-3.1-flash-lite/
 ```
 
+`benchmark run` 도 끝날 때 같은 산출물을 자동으로 갱신합니다(`--no-report` 로 끌 수 있음).
+모든 산출물의 **입력은 `results/models/*/summary.json` 하나뿐** 입니다. 모델을 하나 돌리면
+그 파일이 갱신되고, 나머지는 전부 거기서 다시 만들어집니다.
+
 raw OpenRouter 응답은 DB에만 저장하고 리포트에는 싣지 않습니다.
+
+### RESULT.md
+
+자동 생성 문서입니다. **직접 수정하지 마세요.** 다음 절로 구성됩니다.
+
+리더보드 · 요약(XL-Sum) · 환각 탐지 · 분류(MASSIVE) · EN/KO 교차 일관성 ·
+Surface fact support(진단) · 비용 · 토큰 사용량/캐시 · LLM-as-a-Judge(사용한 경우만) ·
+재현성 · 비고(중단·건너뛴 항목).
+
+맨 앞에 "숫자를 읽기 전에" 주의사항이 붙습니다. 이 문서는 PR이나 메신저로 그대로
+복사되기 때문에, 주의사항이 숫자와 함께 따라다녀야 합니다.
+
+### 스프레드시트
+
+`results/benchmark_results.xlsx` 는 RESULT.md 와 **완전히 같은 데이터**를 시트로 나눈 것입니다
+(두 산출물 모두 같은 테이블 빌더를 씁니다).
+
+| 시트 | 내용 |
+|---|---|
+| `About` | 생성 시각, 버전, 주의사항 |
+| `Leaderboard` | 리더보드 전체 컬럼 |
+| `Summarization` / `Hallucination` / `Classification` | 모델 × 언어 |
+| `CrossLingual` | EN/KO 교차 일관성 분해 |
+| `SurfaceFacts` | 진단 지표 오류 유형별 집계 |
+| `Cost` / `Usage` | 비용과 토큰, 가격 스냅샷 |
+| `Judge` | judge 사용 시 |
+| `Runs` | 재현성 메타데이터(git commit, manifest 해시) |
+
+헤더 고정·필터·숫자 서식이 적용돼 있습니다.
+
+### 자동 갱신 (GitHub Actions)
+
+`.github/workflows/results.yml` 이 `results/models/**/summary.json` 변경을 감지해
+RESULT.md 와 스프레드시트를 다시 만들고 커밋·푸시합니다.
+
+- **입력만 트리거입니다.** 생성된 파일(`RESULT.md`, `results/leaderboard.*`,
+  `results/benchmark_results.xlsx`)은 트리거 경로에 없으므로 워크플로가 자기 자신을
+  다시 부르지 않습니다. `GITHUB_TOKEN` 으로 한 푸시는 워크플로를 트리거하지 않는다는
+  GitHub 동작이 이중 안전장치입니다.
+- 커밋 전에 `tests/test_reporting.py` 를 돌립니다. 생성기가 깨진 채로 잘못된 RESULT.md 가
+  커밋되는 것을 막기 위해서입니다.
+- 네트워크도 OpenRouter 키도 쓰지 않습니다. `summary.json` 만 읽습니다. 비용 0.
+- 산출물은 워크플로 artifact 로도 90일간 올라갑니다.
+- `workflow_dispatch` 로 수동 실행할 수 있고, 이때 `commit: false` 를 주면 커밋 없이
+  artifact 만 만듭니다.
+
+로컬에서 결과를 만들었다면 `results/models/<slug>/summary.json` 을 커밋해서 푸시하면 됩니다.
+나머지는 워크플로가 처리합니다.
 
 리더보드 컬럼은 모델, input/output 가격, 요약 EN/KO, 환각 F1 EN/KO, 분류 EN/KO,
 EN-KO consistency, 토큰 합계, OpenRouter 비용, judge 비용입니다. 모델 상세에는 ROUGE-Lsum,
@@ -660,6 +715,24 @@ benchmark models --check
 `parameters:` 블록을 추가하고 다시 실행하세요. 자세한 내용은
 [모델 파라미터 호환성](#모델-파라미터-호환성) 참고.
 
+### `Reasoning is mandatory for this endpoint and cannot be disabled`
+
+일부 모델은 thinking 을 끌 수 없습니다. 기본 설정은 `reasoning.enabled: false` 이므로
+이런 모델은 모든 요청이 실패하고, circuit breaker 가 10회 만에 중단시킵니다.
+
+해당 모델만 thinking 을 켜되 가장 낮은 강도로 두세요.
+
+```yaml
+- model_id: openai/gpt-5-nano
+  reasoning:
+    enabled: true
+    effort: low      # 명세의 "disabled 또는 최소화" 중 최소화 쪽
+```
+
+**이건 비교 조건이 달라지는 변경입니다.** thinking 을 켠 모델은 reasoning token 이
+추가로 과금되고 출력 특성도 달라지므로, 결과를 읽을 때 그 모델만 조건이 다르다는 점을
+염두에 두세요. `summary.json` 의 `reproducibility.reasoning_config` 에 기록됩니다.
+
 ### 실행이 `ABORTED` 로 끝났다
 
 circuit breaker가 동작한 것입니다. 콘솔의 에러 메시지 표와 `data/logs/` 의 로그 파일을 보세요.
@@ -710,7 +783,8 @@ src/llmbench/
   metrics/       ROUGE, chrF++, BERTScore, surface facts, label metrics
   prompts/       버전이 붙은 EN/KO 프롬프트 템플릿
   judge/         선택적 LLM-as-a-Judge
-  reporting/     모델별 summary, 리더보드, HTML
+  reporting/     모델별 summary, 리더보드, HTML, RESULT.md, Excel
+                 (tables.py 가 두 산출물의 공통 테이블 정의)
   runner.py      plan -> run -> score -> persist
   budget.py      추정과 지출 가드
   failures.py    실패 중단 (circuit breaker)
@@ -719,6 +793,7 @@ src/llmbench/
   cli.py         `benchmark` 커맨드
 tests/           단위 테스트 + mock transport 기반 end-to-end 벤치마크
 scripts/         전체 규모 mock end-to-end 데모
+.github/workflows/results.yml   결과 문서 자동 갱신
 ```
 
 provider adapter는 정확히 하나입니다. `OpenAIProvider`, `GoogleProvider`, `MistralProvider`,

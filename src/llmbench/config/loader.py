@@ -114,6 +114,14 @@ class AppConfig:
     def log_dir(self) -> Path:
         return self._resolve(self.benchmark.logging.directory)
 
+    @cached_property
+    def result_markdown_path(self) -> Path:
+        return self._resolve(self.benchmark.paths.result_markdown)
+
+    @cached_property
+    def result_excel_path(self) -> Path:
+        return self._resolve(self.benchmark.paths.result_excel)
+
     def _resolve(self, value: str) -> Path:
         path = Path(value).expanduser()
         return path if path.is_absolute() else (self.root / path).resolve()

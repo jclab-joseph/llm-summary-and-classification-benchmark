@@ -289,6 +289,8 @@ class PathsConfig(StrictModel):
     cache_db: str = "data/cache/benchmark.db"
     raw_data: str = "data/raw"
     results: str = "results"
+    result_markdown: str = "RESULT.md"
+    result_excel: str = "results/benchmark_results.xlsx"
 
 
 class SamplingConfig(StrictModel):

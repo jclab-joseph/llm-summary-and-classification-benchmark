@@ -30,12 +30,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "tests"))
 from llmbench.config.loader import load_config  # noqa: E402
 from llmbench.db.store import Store  # noqa: E402
 from llmbench.openrouter.client import OpenRouterClient  # noqa: E402
-from llmbench.reporting.html import render_html_report  # noqa: E402
-from llmbench.reporting.leaderboard import (  # noqa: E402
-    build_leaderboard,
-    load_model_summaries,
-    write_leaderboard,
-)
+from llmbench.reporting.build import generate_reports  # noqa: E402
 from llmbench.reporting.summary import write_model_summary  # noqa: E402
 from llmbench.runner import BenchmarkRunner  # noqa: E402
 from mock_openrouter import MockOpenRouter  # noqa: E402
@@ -141,20 +136,21 @@ async def main() -> int:
         # ---------------------------------------------------------------- #
         print("=== reports ===")
         summary_path = write_model_summary(cfg, second)
-        summaries = load_model_summaries(cfg)
-        rows = build_leaderboard(summaries)
-        paths = write_leaderboard(cfg, rows)
-        html = render_html_report(cfg, rows, summaries)
-        for label, path in {"summary": summary_path, **paths, "html": html}.items():
-            print(f"{label:>9}: {path} ({path.stat().st_size:,} bytes)")
+        bundle = generate_reports(cfg)
+        for label, path in {"summary": summary_path, **bundle.paths}.items():
+            print(f"{label:>10}: {path} ({path.stat().st_size:,} bytes)")
 
-        assert abs(rows[0]["openrouter_cost"] - billed) < 1e-9
+        assert abs(bundle.rows[0]["openrouter_cost"] - billed) < 1e-9
+        assert bundle.paths["result_md"].is_file()
+        assert bundle.paths["excel"].is_file()
 
         if args.out:
             out = args.out
             if out.exists():
                 shutil.rmtree(out)
             shutil.copytree(cfg.results_dir, out)
+            # RESULT.md lives at the workspace root, not under results/.
+            shutil.copy2(bundle.paths["result_md"], out / "RESULT.md")
             (out / "README.txt").write_text(
                 "These files were produced by scripts/mock_end_to_end.py against an\n"
                 "in-process mock of the OpenRouter API. No model was called and nothing\n"

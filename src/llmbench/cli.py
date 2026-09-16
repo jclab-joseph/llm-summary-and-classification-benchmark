@@ -24,8 +24,7 @@ from llmbench.judge.runner import JudgeOutcome, JudgeRunner
 from llmbench.logging_setup import configure_logging, get_logger, prune_logs
 from llmbench.openrouter.client import OpenRouterClient
 from llmbench.pricing import PricingService
-from llmbench.reporting.html import render_html_report
-from llmbench.reporting.leaderboard import build_leaderboard, load_model_summaries, write_leaderboard
+from llmbench.reporting.build import generate_reports
 from llmbench.reporting.summary import write_model_summary
 from llmbench.runner import ALL_BENCHMARKS, BenchmarkRunner, RunOutcome
 from llmbench.version import BENCHMARK_VERSION, __version__
@@ -765,6 +764,9 @@ def run(
     skip_preflight: bool = typer.Option(
         False, "--skip-preflight", help="Run even if the model rejects a parameter we send."
     ),
+    report: bool = typer.Option(
+        True, "--report/--no-report", help="Regenerate RESULT.md, the workbook and the leaderboard."
+    ),
     config_dir: Optional[str] = typer.Option(None, "--config-dir"),
 ) -> None:
     """Run the benchmark for one model (or all of them)."""
@@ -864,6 +866,17 @@ def run(
             exit_code = 1
 
     store.close()
+
+    if report and not dry_run:
+        bundle = generate_reports(cfg)
+        console.rule("[bold]reports")
+        for name in ("result_md", "excel", "markdown", "csv", "json", "html"):
+            path = bundle.paths.get(name)
+            if path is None:
+                continue
+            shown = path.relative_to(cfg.root) if path.is_relative_to(cfg.root) else path
+            console.print(f"[green]{name}[/green]: {shown}")
+
     if exit_code:
         raise typer.Exit(code=exit_code)
 
@@ -877,12 +890,10 @@ def report(
 ) -> None:
     """Build results/leaderboard.{csv,json,md} and results/report.html."""
     cfg = _load(config_dir)
-    summaries = load_model_summaries(cfg)
-    if not summaries:
+    bundle = generate_reports(cfg)
+    rows = bundle.rows
+    if not bundle.summaries:
         console.print("[yellow]No model summaries found. Run `benchmark run --all` first.[/yellow]")
-    rows = build_leaderboard(summaries)
-    paths = write_leaderboard(cfg, rows)
-    html_path = render_html_report(cfg, rows, summaries)
 
     table = Table(title="Leaderboard")
     table.add_column("Model")
@@ -903,8 +914,12 @@ def report(
             _money(row["openrouter_cost"], 6),
         )
     console.print(table)
-    for name, path in {**paths, "html": html_path}.items():
-        console.print(f"[green]{name}[/green]: {path}")
+    for name in ("result_md", "excel", "markdown", "csv", "json", "html"):
+        path = bundle.paths.get(name)
+        if path is None:
+            continue
+        shown = path.relative_to(cfg.root) if path.is_relative_to(cfg.root) else path
+        console.print(f"[green]{name}[/green]: {shown}")
 
 
 # --------------------------------------------------------------------------- #

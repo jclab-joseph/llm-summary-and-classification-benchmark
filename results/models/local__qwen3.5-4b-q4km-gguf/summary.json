@@ -1,0 +1,355 @@
+{
+  "schema_version": 2,
+  "generated_at": "2026-09-17T08:13:45+00:00",
+  "run_id": "run-20260917T053130-4932fffb",
+  "variant": {
+    "classification_mode": "text"
+  },
+  "status": "COMPLETED",
+  "api_provider": "local",
+  "model": {
+    "model_id": "local/qwen3.5-4b-q4km-gguf",
+    "display_name": "Qwen3.5 4B (GGUF Q4_K_M, local)",
+    "vendor": "qwen",
+    "provider": "local",
+    "safe_slug": "local__qwen3.5-4b-q4km-gguf",
+    "max_output_tokens": 256,
+    "reasoning": {
+      "enabled": false,
+      "effort": null,
+      "max_tokens": null,
+      "exclude": true
+    },
+    "routing": {
+      "mode": "default",
+      "provider_order": null,
+      "allow_fallbacks": true,
+      "only": null,
+      "ignore": null,
+      "require_parameters": true,
+      "data_collection": "allow",
+      "sort": null,
+      "quantizations": null
+    },
+    "routing_config_hash": "cbe6fb9c14d4b2b12e690d6565e05bcf861c5db26cc56aef45e3e3810f67b298",
+    "uses_alias": false
+  },
+  "scope": {
+    "benchmarks": [
+      "classification"
+    ],
+    "languages": [
+      "en",
+      "ko"
+    ],
+    "total_tasks": 2000,
+    "total_cases": 2000,
+    "skipped": {}
+  },
+  "cache": {
+    "cache_hits": 0,
+    "cache_misses": 2000,
+    "openrouter_api_calls": 2000,
+    "openrouter_http_attempts": 2000,
+    "metric_cache": {
+      "hits": 0,
+      "misses": 0
+    }
+  },
+  "usage": {
+    "prompt_tokens": 721898,
+    "cached_tokens": 0,
+    "cache_write_tokens": 0,
+    "completion_tokens": 0,
+    "reasoning_tokens": 0,
+    "total_tokens": 721898,
+    "successful_cases": 2000
+  },
+  "cost": {
+    "pricing_snapshot": {
+      "model_id": "local/qwen3.5-4b-q4km-gguf",
+      "input_per_million": null,
+      "output_per_million": null,
+      "cached_input_per_million": null,
+      "retrieved_at": "config",
+      "source": "unknown"
+    },
+    "authoritative_source": "openrouter usage.cost",
+    "by_benchmark": {},
+    "summarization_cost": null,
+    "hallucination_cost": null,
+    "classification_cost": null,
+    "retry_error_cost": null,
+    "judge_cost": null,
+    "total_openrouter_cost": null,
+    "fresh_cost_this_run": null,
+    "stored_benchmark_cost": null,
+    "estimated_cost_without_cache": null,
+    "estimated_cache_savings": null,
+    "attempts": {
+      "by_status": {
+        "SUCCESS": {
+          "count": 2000,
+          "usage_cost": 0.0
+        }
+      },
+      "success_attempts": 2000,
+      "success_cost": 0.0,
+      "error_attempts": 0,
+      "error_cost": 0,
+      "total_attempts": 2000,
+      "total_cost": 0.0
+    },
+    "billing": "not applicable - local inference, nothing was billed"
+  },
+  "failures": {},
+  "failure_guard": {
+    "enabled": true,
+    "tripped": false,
+    "reason": null,
+    "attempts": 2000,
+    "failures": 0,
+    "failure_rate": 0.0,
+    "consecutive_failures": 0,
+    "status_counts": {},
+    "top_errors": [],
+    "first_failure": null
+  },
+  "preflight": {
+    "checked": false,
+    "reason": "live model metadata unavailable",
+    "blocking": []
+  },
+  "skipped": {
+    "by_failure_guard": 0,
+    "by_budget": 0
+  },
+  "log_path": "/home/joseph/jcworkspace/llm-summary-and-classification-benchmark/data/logs/benchmark-20260917T044117.log",
+  "notes": [],
+  "metrics": {
+    "classification": {
+      "benchmark": "classification",
+      "version": "1.0.0",
+      "manifest_hash": "1bebd7a4e6cab622b3a85e6f856e019c9459100085c08ca38ccec107d5e3ec21",
+      "dataset_revision": "940fd47a81eaa7f2cc7b129674d945d618ac38c2",
+      "label_space_size": 60,
+      "batch_size": 1,
+      "per_language": {
+        "en": {
+          "cases": 1000,
+          "accuracy": 0.8,
+          "macro_f1": 0.7784520148968087,
+          "correct": 800,
+          "invalid_outputs": 0,
+          "invalid_output_rate": 0.0,
+          "failed_cases": 0,
+          "label_space_size": 60
+        },
+        "ko": {
+          "cases": 1000,
+          "accuracy": 0.749,
+          "macro_f1": 0.7246091754455255,
+          "correct": 749,
+          "invalid_outputs": 0,
+          "invalid_output_rate": 0.0,
+          "failed_cases": 0,
+          "label_space_size": 60
+        }
+      },
+      "overall": {
+        "cases": 2000,
+        "accuracy": 0.7745,
+        "macro_f1": 0.7528237438696134,
+        "correct": 1549,
+        "invalid_outputs": 0,
+        "invalid_output_rate": 0.0,
+        "failed_cases": 0,
+        "label_space_size": 60
+      },
+      "cross_lingual": {
+        "paired_cases": 1000,
+        "prediction_agreement": 0.776,
+        "consistency": 0.835,
+        "both_correct": 692,
+        "both_correct_rate": 0.692,
+        "en_only_correct": 108,
+        "en_only_correct_rate": 0.108,
+        "ko_only_correct": 57,
+        "ko_only_correct_rate": 0.057,
+        "both_wrong": 143,
+        "both_wrong_rate": 0.143
+      },
+      "output_mode": "local_constrained",
+      "evaluators": {
+        "classification_metrics": {
+          "version": "clsmetrics-1.0",
+          "config": {
+            "averaging": "macro",
+            "invalid_counts_as_wrong": true,
+            "output_mode": "local_constrained"
+          }
+        }
+      }
+    }
+  },
+  "judge": {},
+  "reproducibility": {
+    "benchmark_package_version": "1.0.0",
+    "benchmark_version": "1.0.0",
+    "git_commit": "a05631eb2e5769458bfd0e57d53515a08ebf6df1",
+    "git_dirty": true,
+    "python_version": "3.12.3",
+    "python_implementation": "CPython",
+    "platform": "Linux-6.8.0-47-generic-x86_64-with-glibc2.39",
+    "packages": {
+      "httpx": "0.28.1",
+      "pydantic": "2.13.5",
+      "sqlalchemy": "2.0.54",
+      "pandas": "3.0.5",
+      "numpy": "2.5.3",
+      "scikit-learn": "1.9.1",
+      "sacrebleu": "2.6.0",
+      "rouge-score": "0.1.2",
+      "bert-score": "not-installed",
+      "torch": "not-installed",
+      "transformers": "not-installed",
+      "typer": "0.27.2",
+      "rich": "15.0.0",
+      "tenacity": "not-installed",
+      "pyarrow": "25.0.1"
+    },
+    "captured_at": "2026-09-17T05:31:30+00:00",
+    "executed_at": "2026-09-17T05:31:30+00:00",
+    "api_provider": "openrouter",
+    "model_id": "local/qwen3.5-4b-q4km-gguf",
+    "requested_model": "local/qwen3.5-4b-q4km-gguf",
+    "alias_resolution": null,
+    "uses_alias": false,
+    "routing_config": {
+      "mode": "default",
+      "provider_order": null,
+      "allow_fallbacks": true,
+      "only": null,
+      "ignore": null,
+      "require_parameters": true,
+      "data_collection": "allow",
+      "sort": null,
+      "quantizations": null
+    },
+    "routing_config_hash": "cbe6fb9c14d4b2b12e690d6565e05bcf861c5db26cc56aef45e3e3810f67b298",
+    "reasoning_config": {
+      "enabled": false,
+      "effort": null,
+      "max_tokens": null,
+      "exclude": true
+    },
+    "generation": {
+      "version": "gen-1",
+      "temperature": 0.0,
+      "top_p": 1.0,
+      "seed": null,
+      "tools_enabled": false,
+      "web_search_enabled": false
+    },
+    "truncation_policy": {
+      "version": "trunc-1",
+      "summarization_max_source_tokens": 1800,
+      "hallucination_max_source_tokens": 1600,
+      "word_boundary": true
+    },
+    "structured_output": {
+      "version": "so-1",
+      "classification_mode": "text",
+      "judge_mode": "json_schema"
+    },
+    "local_engine": {
+      "engine": "llama_cpp_pcd",
+      "algorithm_version": "pcd-2",
+      "repo": "unsloth/Qwen3.5-4B-GGUF",
+      "filename": "Qwen3.5-4B-Q4_K_M.gguf",
+      "revision": "e87f176479d0855a907a41277aca2f8ee7a09523",
+      "runtime": {
+        "n_ctx": 4096,
+        "n_gpu_layers": 0,
+        "seed": 0,
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "max_label_tokens": 32
+      }
+    },
+    "prompt_versions": {
+      "summarization": "sum-1",
+      "hallucination": "halu-1",
+      "classification": "cls-1",
+      "classification_json_schema": "cls-json-1",
+      "classification_single": "cls-single-1",
+      "judge": "judge-1"
+    },
+    "metric_versions": {
+      "rouge": "rouge-1.1",
+      "chrf": "chrf-1.0",
+      "bertscore": "bertscore-1.0",
+      "surface_facts": "surface-facts-1.1",
+      "classification_metrics": "clsmetrics-1.0",
+      "hallucination_metrics": "halumetrics-1.0"
+    },
+    "manifests": {
+      "summarization": {
+        "path": "xlsum_v1.jsonl",
+        "hash": "0135c4f4499e35dcde7855ad6afe33e333ebf2bca519a20b81257dc39150cd62",
+        "dataset_revision": "30fece425f9a3866e04321773ca7a80056d55ca6",
+        "counts": {
+          "en": 200,
+          "ko": 200,
+          "total": 400
+        }
+      },
+      "hallucination:en": {
+        "path": "halueval_summary_v1.jsonl",
+        "hash": "21debf696ed02ef001638142e2864a1bb58be409f88d8c86ad36e067ee609ca5",
+        "dataset_revision": "12a856119f03975a94509091e8cada3e6be6ead7",
+        "counts": {
+          "en": 400,
+          "total": 400
+        }
+      },
+      "hallucination:ko": {
+        "path": "aihub_summary_factuality_v1.jsonl",
+        "hash": "b49d914db700703584e2388f602808314a59c9e088a20f02e670ead58141fa96",
+        "dataset_revision": "local:Validation",
+        "counts": {
+          "ko": 400,
+          "total": 400
+        }
+      },
+      "classification": {
+        "path": "massive_v1.jsonl",
+        "hash": "1bebd7a4e6cab622b3a85e6f856e019c9459100085c08ca38ccec107d5e3ec21",
+        "dataset_revision": "940fd47a81eaa7f2cc7b129674d945d618ac38c2",
+        "counts": {
+          "en": 1000,
+          "ko": 1000,
+          "total": 2000
+        }
+      },
+      "judge": {
+        "path": "judge_xlsum_v1.jsonl",
+        "hash": "220531204ce53fe08cf0d0d7e8b0dd5084dec22ca0939287be1d4313cf690c51",
+        "dataset_revision": "30fece425f9a3866e04321773ca7a80056d55ca6",
+        "counts": {
+          "en": 100,
+          "ko": 100,
+          "total": 200
+        }
+      }
+    },
+    "pricing_snapshot": {
+      "model_id": "local/qwen3.5-4b-q4km-gguf",
+      "input_per_million": null,
+      "output_per_million": null,
+      "cached_input_per_million": null,
+      "retrieved_at": "config",
+      "source": "unknown"
+    }
+  }
+}

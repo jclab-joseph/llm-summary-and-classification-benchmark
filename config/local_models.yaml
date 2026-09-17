@@ -31,7 +31,7 @@ models:
       revision: 91cad51170dc346986eccefdc2dd33a9da36ead9
     runtime:
       n_ctx: 4096
-      n_threads: null
+      n_threads: 8
       n_gpu_layers: 0
       n_batch: 512
       seed: 0
@@ -56,8 +56,10 @@ models:
       revision: 91cad51170dc346986eccefdc2dd33a9da36ead9
     runtime:
       n_ctx: 4096
-      # null lets llama.cpp choose; set a number to make throughput reproducible.
-      n_threads: null
+      # Pinned rather than null: llama.cpp otherwise picks a thread count from
+      # machine load, and the reduction order that follows makes results drift
+      # slightly between runs (measured: 3 of 1,000 answers changed).
+      n_threads: 8
       # How many of the model's 28 layers run on the GPU. 0 = CPU only.
       #
       # This is NOT just a speed knob: the CUDA and CPU kernels disagree on about
@@ -89,7 +91,7 @@ models:
       revision: f6d5376be1edb4d416d56da11e5397a961aca8ae
     runtime:
       n_ctx: 4096
-      n_threads: null
+      n_threads: 8
       n_gpu_layers: 0
       n_batch: 512
       seed: 0
@@ -111,7 +113,7 @@ models:
       revision: e87f176479d0855a907a41277aca2f8ee7a09523
     runtime:
       n_ctx: 4096
-      n_threads: null
+      n_threads: 8
       n_gpu_layers: 0
       n_batch: 512
       seed: 0

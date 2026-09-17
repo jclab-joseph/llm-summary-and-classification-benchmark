@@ -143,15 +143,24 @@ def _apply_classification_mode(cfg: AppConfig, mode: str | None) -> None:
     cfg.benchmark.structured_output.classification_mode = mode
 
 
-def _selected_models(cfg: AppConfig, model: str | None, run_all: bool) -> list[ModelConfig]:
-    if run_all:
-        models = cfg.models.enabled_models()
+def _selected_models(
+    cfg: AppConfig,
+    model: str | None,
+    run_all: bool,
+    run_all_local: bool = False,
+) -> list[ModelConfig]:
+    if run_all or run_all_local:
+        models: list[ModelConfig] = []
+        if run_all:
+            models += cfg.models.enabled_models()
+        if run_all_local:
+            models += cfg.local_models.enabled_models()
         if not models:
-            console.print("[red]no enabled models in config/models.yaml[/red]")
+            console.print("[red]no enabled models in the selected config[/red]")
             raise typer.Exit(code=2)
         return models
     if not model:
-        console.print("[red]specify --model <openrouter-slug> or --all[/red]")
+        console.print("[red]specify --model <slug>, --all or --all-local[/red]")
         raise typer.Exit(code=2)
     try:
         return [cfg.require_model(model)]
@@ -262,8 +271,9 @@ def models(
         return
     constraints = cfg.pricing.constraints
 
-    table = Table(title=f"Configured models (API provider: openrouter)")
+    table = Table(title="Configured models")
     table.add_column("Model slug")
+    table.add_column("API")
     table.add_column("Display name")
     table.add_column("Vendor")
     table.add_column("Enabled", justify="center")
@@ -286,6 +296,7 @@ def models(
             routing_text += " no-fallback"
         table.add_row(
             entry.model_id,
+            entry.provider,
             entry.display_name,
             entry.vendor,
             "yes" if entry.enabled else "no",
@@ -302,6 +313,8 @@ def models(
     if show_judges:
         for entry in cfg.models.judges:
             add(entry)
+    for entry in cfg.local_models.models:
+        add(entry)
 
     console.print(table)
     console.print(
@@ -317,6 +330,7 @@ def _check_capabilities(cfg: AppConfig, *, include_judges: bool = True) -> None:
     This is the check that would have caught 1,300 identical HTTP 404s up front.
     """
     _load_dotenv(cfg)
+    # Local models have no OpenRouter metadata to compare against.
     entries = list(cfg.models.models) + (list(cfg.models.judges) if include_judges else [])
     model_ids = [m.model_id for m in entries]
 
@@ -481,17 +495,23 @@ def _print_plan(cfg: AppConfig, outcome: RunOutcome, budget: float) -> None:
     console.print(f"[bold]Estimated new output tokens:[/bold]\n{estimate.est_output_tokens:,}")
 
     pricing_snapshot = outcome.cost.get("pricing_snapshot", {})
-    console.print(
-        f"\n[bold]Pricing used for the estimate:[/bold] "
-        f"in {_money(pricing_snapshot.get('input_per_million'))}/M, "
-        f"out {_money(pricing_snapshot.get('output_per_million'))}/M "
-        f"(source: {pricing_snapshot.get('source')})"
-    )
-    console.print("\n[bold]Estimated fresh OpenRouter cost:[/bold]")
-    console.print(f"Input:  {_money(estimate.est_input_cost)}")
-    console.print(f"Output: {_money(estimate.est_output_cost)}")
-    console.print(f"Total:  {_money(estimate.est_total_cost)}")
-    console.print(f"\n[bold]Budget:[/bold]\n{_money(budget, 2)}")
+    if plan.model.provider != "local":
+        console.print(
+            f"\n[bold]Pricing used for the estimate:[/bold] "
+            f"in {_money(pricing_snapshot.get('input_per_million'))}/M, "
+            f"out {_money(pricing_snapshot.get('output_per_million'))}/M "
+            f"(source: {pricing_snapshot.get('source')})"
+        )
+    if plan.model.provider == "local":
+        console.print(
+            "\n[bold]Cost:[/bold]\nnot applicable - local inference, nothing is billed"
+        )
+    else:
+        console.print("\n[bold]Estimated fresh OpenRouter cost:[/bold]")
+        console.print(f"Input:  {_money(estimate.est_input_cost)}")
+        console.print(f"Output: {_money(estimate.est_output_cost)}")
+        console.print(f"Total:  {_money(estimate.est_total_cost)}")
+        console.print(f"\n[bold]Budget:[/bold]\n{_money(budget, 2)}")
 
     status = outcome.cost.get("budget_status", "SAFE TO RUN")
     colour = "green" if status == "SAFE TO RUN" else "red"
@@ -504,6 +524,9 @@ def _print_plan(cfg: AppConfig, outcome: RunOutcome, budget: float) -> None:
 def estimate(
     model: Optional[str] = typer.Option(None, "--model", "-m", help="OpenRouter model slug."),
     all_models: bool = typer.Option(False, "--all", help="Estimate every enabled model."),
+    all_local: bool = typer.Option(
+        False, "--all-local", help="Include every enabled model from config/local_models.yaml."
+    ),
     benchmark: Optional[list[str]] = typer.Option(None, "--benchmark", "-b", help="Limit to benchmarks."),
     language: Optional[list[str]] = typer.Option(None, "--language", "-l", help="Limit to languages (en/ko)."),
     budget_usd: float = typer.Option(None, "--budget-usd", help="Override the per-model budget."),
@@ -521,7 +544,7 @@ def estimate(
     runner = BenchmarkRunner(cfg, store)
     budget = budget_usd if budget_usd is not None else cfg.benchmark.budget.default_usd
 
-    for entry in _selected_models(cfg, model, all_models):
+    for entry in _selected_models(cfg, model, all_models, all_local):
         outcome = asyncio.run(
             runner.run(
                 entry,
@@ -549,12 +572,15 @@ def _print_run_result(cfg: AppConfig, outcome: RunOutcome) -> None:
     console.print(f"Total cases: {plan.estimate.total_cases:,}")
     console.print(f"Cache hits: {plan.estimate.cached_cases:,}")
     console.print(f"Cache misses: {plan.estimate.total_cases - plan.estimate.cached_cases:,}")
-    console.print(f"OpenRouter API calls: {outcome.api_calls:,}")
-    console.print()
-    console.print(f"Fresh OpenRouter cost:     {_money(cost.get('fresh_cost_this_run'), 6)}")
-    console.print(f"Stored benchmark cost:     {_money(cost.get('stored_benchmark_cost'), 6)}")
-    console.print(f"Estimated cost w/o cache:  {_money(cost.get('estimated_cost_without_cache'), 6)}")
-    console.print(f"Estimated cache savings:   {_money(cost.get('estimated_cache_savings'), 6)}")
+    if plan.model.provider == "local":
+        console.print(f"Local engine calls: {outcome.api_calls:,}")
+    else:
+        console.print(f"OpenRouter API calls: {outcome.api_calls:,}")
+        console.print()
+        console.print(f"Fresh OpenRouter cost:     {_money(cost.get('fresh_cost_this_run'), 6)}")
+        console.print(f"Stored benchmark cost:     {_money(cost.get('stored_benchmark_cost'), 6)}")
+        console.print(f"Estimated cost w/o cache:  {_money(cost.get('estimated_cost_without_cache'), 6)}")
+        console.print(f"Estimated cache savings:   {_money(cost.get('estimated_cache_savings'), 6)}")
 
     summary = outcome.failure_summary or {}
     if outcome.failures:
@@ -667,8 +693,21 @@ def _print_run_result(cfg: AppConfig, outcome: RunOutcome) -> None:
             cross_table.add_row("Both wrong", _num(cross.get("both_wrong_rate")), f"{cross.get('both_wrong', 0):,}")
             console.print(cross_table)
 
+    if plan.model.provider == "local":
+        console.print()
+        console.print(
+            "[dim]Local inference: nothing was billed, so there is no cost report. "
+            "Token counts come from the engine.[/dim]"
+        )
+
     usage = outcome.usage or {}
-    usage_table = Table(title="Actual OpenRouter usage (all stored cases for this model)")
+    usage_table = Table(
+        title=(
+            "Token usage (local engine)"
+            if plan.model.provider == "local"
+            else "Actual OpenRouter usage (all stored cases for this model)"
+        )
+    )
     usage_table.add_column("Field")
     usage_table.add_column("Value", justify="right")
     for label, key in (
@@ -681,6 +720,9 @@ def _print_run_result(cfg: AppConfig, outcome: RunOutcome) -> None:
     ):
         usage_table.add_row(label, f"{int(usage.get(key, 0)):,}")
     console.print(usage_table)
+
+    if plan.model.provider == "local":
+        return
 
     cost_table = Table(title="Actual cost (OpenRouter usage.cost)")
     cost_table.add_column("Item")
@@ -766,6 +808,9 @@ async def _run_judge(
 def run(
     model: Optional[str] = typer.Option(None, "--model", "-m", help="OpenRouter model slug."),
     all_models: bool = typer.Option(False, "--all", help="Run every enabled model."),
+    all_local: bool = typer.Option(
+        False, "--all-local", help="Include every enabled model from config/local_models.yaml."
+    ),
     benchmark: Optional[list[str]] = typer.Option(
         None, "--benchmark", "-b", help=f"Limit to benchmarks: {', '.join(ALL_BENCHMARKS)}."
     ),
@@ -795,7 +840,10 @@ def run(
     """Run the benchmark for one model (or all of them)."""
     cfg = _load(config_dir)
     _load_dotenv(cfg)
-    if not dry_run:
+    local_only = all_local and not all_models and not model
+    if model:
+        local_only = cfg.local_models.by_id(model) is not None
+    if not dry_run and not local_only:
         _require_api_key()
     if judge not in {"none", "cheap", "strong"}:
         console.print("[red]--judge must be one of: none, cheap, strong[/red]")
@@ -811,7 +859,7 @@ def run(
             f"{cfg.benchmark.structured_output.classification_mode}[/dim]"
         )
 
-    for entry in _selected_models(cfg, model, all_models):
+    for entry in _selected_models(cfg, model, all_models, all_local):
         console.rule(f"[bold]{entry.model_id}")
         with Progress(
             SpinnerColumn(),

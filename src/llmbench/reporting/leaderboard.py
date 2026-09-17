@@ -26,6 +26,7 @@ __all__ = [
 
 LEADERBOARD_COLUMNS = [
     ("model", "Model"),
+    ("api_provider", "API"),
     ("input_per_million", "Input $/M"),
     ("output_per_million", "Output $/M"),
     ("summary_en", "Summary EN"),
@@ -99,6 +100,7 @@ def build_leaderboard(summaries: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "model": _get(summary, "model", "model_id", default=""),
                 "display_name": _get(summary, "model", "display_name", default=""),
                 "vendor": _get(summary, "model", "vendor", default=""),
+                "api_provider": summary.get("api_provider", "openrouter"),
                 "status": summary.get("status", ""),
                 "input_per_million": pricing.get("input_per_million"),
                 "output_per_million": pricing.get("output_per_million"),
@@ -159,6 +161,7 @@ def _markdown_table(rows: list[dict[str, Any]]) -> str:
     for row in rows:
         cells = [
             str(row["model"]),
+            str(row.get("api_provider", "openrouter")),
             _fmt(row["input_per_million"], ".4f"),
             _fmt(row["output_per_million"], ".4f"),
             _fmt(row["summary_en"], ".4f"),

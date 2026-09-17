@@ -20,6 +20,7 @@ __all__ = [
     "summarization_prompt",
     "hallucination_prompt",
     "classification_prompt",
+    "classification_single_prompt",
     "classification_json_schema",
     "judge_prompt",
 ]
@@ -31,6 +32,9 @@ PROMPT_VERSIONS = {
     # Structured-output variant: the model returns a JSON array constrained to the
     # frozen label space instead of writing `<n>: <intent number>` by hand.
     "classification_json_schema": "cls-json-1",
+    # One utterance per prompt, answer constrained to the label set by the
+    # decoder itself. Used by local engines.
+    "classification_single": "cls-single-1",
     "judge": "judge-1",
 }
 
@@ -250,6 +254,43 @@ def classification_json_schema(label_space: Sequence[str], count: int) -> dict[s
             },
         },
     }
+
+
+_CLS_SINGLE_SYSTEM = {
+    "en": (
+        "You are an intent classifier for a voice assistant. Reply with exactly one "
+        "intent name from the list and nothing else.\n\nIntents:\n{labels}"
+    ),
+    "ko": (
+        "당신은 음성 비서의 인텐트 분류기다. 아래 목록에서 인텐트 이름 하나만 출력하고, "
+        "그 외에는 아무것도 출력하지 마라.\n\n인텐트 목록:\n{labels}"
+    ),
+}
+
+_CLS_SINGLE_USER = {
+    "en": "Utterance: {text}\nIntent:",
+    "ko": "발화: {text}\n인텐트:",
+}
+
+
+def classification_single_prompt(
+    language: str,
+    text: str,
+    label_space: Sequence[str],
+) -> RenderedPrompt:
+    """One utterance, one label.
+
+    The label list sits in the system message so every request in a run shares an
+    identical prefix, which a local engine reuses from its KV cache instead of
+    re-prefilling 60 intent names each time.
+    """
+    lang = language if language in _CLS_SINGLE_USER else "en"
+    labels = "\n".join(f"- {label}" for label in label_space)
+    return RenderedPrompt(
+        system=_CLS_SINGLE_SYSTEM[lang].format(labels=labels),
+        user=_CLS_SINGLE_USER[lang].format(text=text),
+        template_version=PROMPT_VERSIONS["classification_single"],
+    )
 
 
 def classification_prompt(

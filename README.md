@@ -130,6 +130,78 @@ text 점수가 분류 실력이 아니라 형식 준수 실패에 발목 잡혀 
 어느 쪽이 옳은지는 용도에 달렸습니다. 서비스에 붙일 모델을 고른다면 형식 준수도 능력이고,
 순수 분류력을 비교한다면 `json_schema` 쪽이 맞습니다.
 
+#### 로컬 실행 (OpenRouter 없이)
+
+분류 벤치마크는 **이 머신에서 직접 돌리는 모델**도 지원합니다. 설정은
+`config/local_models.yaml` 에 따로 있고, `config/models.yaml` 은 OpenRouter 전용으로 남습니다.
+
+```bash
+# CPU 휠
+uv sync --extra local --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+# 또는 CUDA 휠 (툴킷 버전에 맞는 태그 선택)
+uv sync --extra local --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu122
+
+benchmark run --all-local --benchmark classification
+```
+
+```yaml
+# config/local_models.yaml
+models:
+  - model_id: local/qwen2.5-1.5b-instruct-q8-gguf
+    display_name: Qwen2.5 1.5B Instruct (GGUF Q8_0, local)
+    provider: local
+    engine: llama_cpp
+    source:
+      repo: Qwen/Qwen2.5-1.5B-Instruct-GGUF
+      filename: qwen2.5-1.5b-instruct-q8_0.gguf
+      revision: 91cad51170dc346986eccefdc2dd33a9da36ead9   # 가중치도 고정합니다
+    runtime:
+      n_ctx: 4096
+      n_gpu_layers: 20    # 28개 레이어 중 GPU 에 올릴 수
+      temperature: 0.0
+```
+
+**GPU 오프로드는 속도 설정이 아닙니다.** CUDA 커널과 CPU 커널은 답이 미세하게 갈립니다 —
+같은 발화 240건을 두 방식으로 돌렸더니 **3건(1.2%)이 달랐습니다.** 그래서 `n_gpu_layers` 는
+inference cache key 에 포함되고, 값을 바꾸면 벤치마크가 다시 실행됩니다. 두 결과를 한 숫자로
+합치면 서로 다른 시스템 둘을 섞는 셈이기 때문입니다.
+
+`n_threads` 와 `n_batch` 는 반대로 처리량만 바꾸므로 cache key 에서 제외됩니다. 스레드 수를
+바꿨다고 전체를 다시 돌릴 이유는 없습니다.
+
+참고 수치(GTX 1650 SUPER 4GB, 데스크톱이 2.2GB 점유 → 여유 1.9GB, 발화 2,000건):
+
+| n_gpu_layers | 건당 | 2,000건 |
+|---:|---:|---:|
+| 0 (CPU) | 1.194 s | 39.8분 |
+| 10 | 0.599 s | 20.0분 |
+| 20 | 0.395 s | **13.2분** |
+| 24 이상 | 가중치가 VRAM 에 안 들어가 프로세스 중단 |
+
+VRAM 이 부족하면 llama.cpp 는 **조용히 CPU 로 내려가지 않고 프로세스를 종료합니다.** 설정과
+다른 조건으로 결과가 기록되는 것보다 낫기 때문에 그대로 둡니다. 여유 VRAM 에 맞춰
+`n_gpu_layers` 를 낮추세요.
+
+**답은 GBNF 문법으로 60개 인텐트 집합에 제약됩니다.** 호스팅 `json_schema` 모드가 제공자에게
+사서 쓰는 보장을, 로컬 디코더가 직접 수행하는 것입니다. 파싱 불가능한 답이 구조적으로
+나올 수 없습니다.
+
+**읽을 때 주의할 점이 두 가지 있습니다.**
+
+- **비용이 없습니다.** 로컬 실행은 과금이 없으므로 비용 열이 `0` 이 아니라 **비어 있습니다**.
+  0으로 적으면 리더보드에서 "가장 싼 호스팅 모델"처럼 보이기 때문입니다. `API` 열이 `local`
+  인 행이 여기 해당합니다.
+- **조건이 다릅니다.** 호스팅 실행은 비용을 아끼려고 발화 20건을 한 요청에 묶지만, 로컬은
+  아낄 API 호출이 없어 **발화 1건당 프롬프트 1개**입니다. 배치 추적 부담이 없으므로 호스팅
+  `text` 모드와 직접 비교하지 마세요. 조건은 `output_mode: local_constrained` 로 기록됩니다.
+
+요약과 환각 벤치마크는 로컬 트랙이 지원하지 않습니다(자유 생성이 필요합니다). 해당 벤치마크를
+요청하면 `SKIPPED` 로 표시하고 분류만 실행합니다.
+
+다른 백엔드(예: GPTQ-Int8 + transformers)는 `llmbench/local/engine.py` 의 `ENGINES` 에
+등록하면 됩니다. 엔진은 `classify(system, user, candidates) -> LocalResult` 하나만 구현하면
+나머지(캐시, 채점, 리포트)는 그대로 동작합니다.
+
 EN/KO 쌍은 **같은 semantic id** 를 공유합니다. 뜻이 같은 발화를 두 언어로 물어본 것이라,
 두 언어 사이의 편차를 직접 볼 수 있습니다.
 
@@ -187,7 +259,14 @@ uv sync
 
 ```bash
 uv sync --extra bertscore   # BERTScore 활성화 (torch + transformers, 수 GB)
+uv sync --extra local       # 로컬 분류 실행 (llama.cpp)
 uv sync --extra dev         # 테스트 의존성
+```
+
+`local` extra 의 CPU 휠은 별도 인덱스가 필요합니다.
+
+```bash
+uv sync --extra local --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
 ```
 
 `bertscore` extra 없이도 벤치마크는 끝까지 동작합니다. 해당 지표는 오해를 부르는 `0.0` 이 아니라
@@ -481,6 +560,7 @@ benchmark run --model mistralai/ministral-8b-2512 --language ko
 | `--no-metric-cache` | 캐시된 추론으로 지표만 다시 계산 |
 | `--judge cheap\|strong` | 선택적 judge 단계 추가 |
 | `--classification-mode` | `text`(기본) 또는 `json_schema` |
+| `--all-local` | `config/local_models.yaml` 의 로컬 모델 포함 |
 | `--skip-preflight` | 모델이 거부하는 파라미터가 있어도 강행 |
 | `-v` / `-vv` | 콘솔 로그를 INFO / DEBUG 로 |
 | `--log-file PATH` | 로그 파일 위치 변경 |
@@ -886,6 +966,23 @@ Gemini 계열이 structured output 요청에 400 으로 응답할 때 나옵니�
 해당 모델에 `parameters.structured_outputs: false` 를 설정하세요. 그러면 사전 검사가
 `json_schema` 모드 실행을 **요청 전에** 막고, `text` 모드는 정상 동작합니다.
 
+### 로컬 실행이 출력 없이 종료된다 (exit 132 / SIGILL)
+
+`llama-cpp-python` 사전 빌드 휠 중 일부는 **AVX-512** 로 빌드돼 있어, 이를 지원하지 않는 CPU
+(예: Coffee Lake i9-9900K)에서는 import 시점에 SIGILL 로 죽습니다. 파이썬 예외가 아니라
+프로세스 종료라 아무 메시지도 남지 않습니다.
+
+```bash
+grep -o -E "avx512[a-z0-9_]*" /proc/cpuinfo | sort -u   # 비어 있으면 AVX-512 없음
+```
+
+다른 `cuXXX` 태그를 시도하거나(이 저장소는 `cu122` 로 검증했습니다) 소스에서 빌드하세요.
+
+### 로컬 실행이 모델 로딩 중 종료된다
+
+VRAM 부족입니다. `nvidia-smi` 로 여유 메모리를 확인하고 `n_gpu_layers` 를 낮추세요.
+데스크톱 환경이 이미 2GB 이상 쓰고 있는 경우가 흔합니다.
+
 ### 실행이 `ABORTED` 로 끝났다
 ### 실행이 `ABORTED` 로 끝났다
 
@@ -937,6 +1034,7 @@ src/llmbench/
   metrics/       ROUGE, chrF++, BERTScore, surface facts, label metrics
   prompts/       버전이 붙은 EN/KO 프롬프트 템플릿
   judge/         선택적 LLM-as-a-Judge
+  local/         로컬 실행 백엔드 (분류 전용, OpenRouter 아님)
   reporting/     모델별 summary, 리더보드, HTML, RESULT.md, Excel
                  (tables.py 가 두 산출물의 공통 테이블 정의)
   runner.py      plan -> run -> score -> persist
@@ -950,9 +1048,13 @@ scripts/         전체 규모 mock end-to-end 데모
 .github/workflows/results.yml   결과 문서 자동 갱신
 ```
 
-provider adapter는 정확히 하나입니다. `OpenAIProvider`, `GoogleProvider`, `MistralProvider`,
-`AnthropicProvider` 같은 클래스는 없으며, 벤치마크 코어가 vendor를 보고 endpoint를 분기하는
-일도 없습니다.
+**API provider adapter 는 정확히 하나입니다.** `OpenAIProvider`, `GoogleProvider`,
+`MistralProvider`, `AnthropicProvider` 같은 클래스는 없으며, 벤치마크 코어가 vendor를 보고
+endpoint를 분기하는 일도 없습니다.
+
+`local/` 은 두 번째 vendor 연동이 아니라 **다른 실행 백엔드**입니다. 모델 API 와 통신하는 것은
+여전히 `OpenRouterClient` 하나뿐이고, 로컬 엔진은 아무 API 도 호출하지 않습니다. 러너가
+그대로 재사용되도록 같은 client 인터페이스를 구현할 뿐입니다.
 
 ---
 

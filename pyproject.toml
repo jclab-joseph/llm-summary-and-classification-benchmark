@@ -29,6 +29,16 @@ bertscore = [
     "torch>=2.2",
     "transformers>=4.40",
 ]
+# Local (non-OpenRouter) execution of the classification benchmark.
+# Prebuilt wheels, CPU:
+#   uv sync --extra local --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+# Prebuilt wheels, CUDA (pick the tag matching your toolkit):
+#   uv sync --extra local --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu122
+# Some CUDA wheel builds use AVX-512 and die with SIGILL on CPUs without it
+# (e.g. Coffee Lake); if that happens, try another cuXXX tag or build from source.
+local = [
+    "llama-cpp-python>=0.3.2",
+]
 # Only needed if you want to re-derive datasets through the HuggingFace `datasets`
 # library instead of the built-in pinned-revision downloader.
 hf = [

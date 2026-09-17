@@ -17,10 +17,18 @@ from llmbench.metrics.classification import (
     cross_lingual_consistency,
     parse_batch_answer,
     parse_batch_json_answer,
+    parse_single_label,
 )
-from llmbench.prompts.registry import classification_json_schema, classification_prompt
+from llmbench.prompts.registry import (
+    classification_json_schema,
+    classification_prompt,
+    classification_single_prompt,
+)
 
 __all__ = ["build_classification_tasks", "score_classification", "batch_records", "label_space_of"]
+
+
+LOCAL_MODE = "local_constrained"
 
 
 def uses_structured_output(cfg: AppConfig) -> bool:
@@ -28,14 +36,24 @@ def uses_structured_output(cfg: AppConfig) -> bool:
     return cfg.benchmark.structured_output.classification_mode == "json_schema"
 
 
-def structured_output_version(cfg: AppConfig) -> str:
+def classification_output_mode(cfg: AppConfig, model: ModelConfig | None = None) -> str:
+    """How the answer is produced: `text`, `json_schema` or `local_constrained`.
+
+    A local engine constrains decoding itself and answers one utterance at a
+    time, so it does not use either hosted mode.
+    """
+    if model is not None and model.provider == "local":
+        return LOCAL_MODE
+    return cfg.benchmark.structured_output.classification_mode
+
+
+def structured_output_version(cfg: AppConfig, model: ModelConfig | None = None) -> str:
     """Schema version recorded in the cache key.
 
-    The mode is part of it, so flipping `classification_mode` produces different
-    keys and the two conditions can coexist in one cache instead of overwriting
-    each other.
+    The mode is part of it, so switching conditions produces different keys and
+    they coexist in one cache instead of overwriting each other.
     """
-    return f"{cfg.benchmark.structured_output.version}:{cfg.benchmark.structured_output.classification_mode}"
+    return f"{cfg.benchmark.structured_output.version}:{classification_output_mode(cfg, model)}"
 
 
 def label_space_of(manifest: Manifest) -> list[str]:
@@ -63,14 +81,47 @@ def build_classification_tasks(
     answer_tokens = cfg.benchmark.generation.max_output_tokens.classification
     wanted = set(languages) if languages else None
     labels = label_space_of(manifest)
-    structured = uses_structured_output(cfg)
-    schema_version = structured_output_version(cfg)
+    mode = classification_output_mode(cfg, model)
+    structured = mode == "json_schema"
+    local = mode == LOCAL_MODE
+    schema_version = structured_output_version(cfg, model)
+    # The weights, the engine and its decoding settings all change the answer,
+    # so they belong in the cache key exactly like a routing change does.
+    extra = {"local_engine": model.engine_material()} if local else None
 
     tasks: list[Task] = []
     for language in manifest.languages():
         if wanted and language not in wanted:
             continue
         records = manifest.by_language(language)
+        if local:
+            # One utterance per prompt: batching exists to save API calls, and a
+            # local engine has none to save. The label list stays in the system
+            # message so the engine reuses one prefill across the whole run.
+            for record in records:
+                prompt = classification_single_prompt(language, record.payload["text"], labels)
+                tasks.append(
+                    make_task(
+                        cfg=cfg,
+                        model=model,
+                        benchmark=bench.name,
+                        benchmark_version=bench.version,
+                        language=language,
+                        task_id=f"massive-single:{language}:{record.payload['semantic_id']}",
+                        sample_ids=[record.sample_id],
+                        dataset_revision=manifest.meta.dataset_revision,
+                        split=manifest.meta.split,
+                        sample_content_hash=record.source_hash,
+                        prompt=prompt,
+                        answer_tokens=model.runtime.max_label_tokens,
+                        structured_output_version=schema_version,
+                        extra=extra,
+                        alias_resolution=alias_resolution,
+                        candidates=labels,
+                        meta={"batch_size": 1, "label_count": len(labels), "output_mode": mode},
+                    )
+                )
+            continue
         for batch_index, batch in enumerate(batch_records(records, bench.batch_size)):
             prompt = classification_prompt(
                 language, [r.payload["text"] for r in batch], labels, structured=structured
@@ -110,18 +161,21 @@ def score_classification(
     manifest: Manifest,
     results: dict[str, dict[str, Any]],
     *,
+    model: ModelConfig | None = None,
     metric_cache=None,
     languages: Sequence[str] | None = None,
 ) -> dict[str, Any]:
     bench = cfg.benchmark.benchmarks.classification
     labels = label_space_of(manifest)
     wanted = set(languages) if languages else None
-    structured = uses_structured_output(cfg)
+    mode = classification_output_mode(cfg, model)
+    structured = mode == "json_schema"
+    local = mode == LOCAL_MODE
     # The parser differs per mode, so the evaluator identity has to differ too --
     # otherwise a cached text-mode parse would be reused for a JSON reply.
     evaluator = replace(
         CLASSIFICATION_EVALUATOR,
-        config={**CLASSIFICATION_EVALUATOR.config, "output_mode": cfg.benchmark.structured_output.classification_mode},
+        config={**CLASSIFICATION_EVALUATOR.config, "output_mode": mode},
     )
 
     rows_by_language: dict[str, list[dict[str, Any]]] = {}
@@ -130,6 +184,31 @@ def score_classification(
             continue
         records = manifest.by_language(language)
         rows: list[dict[str, Any]] = []
+        if local:
+            for record in records:
+                task_id = f"massive-single:{language}:{record.payload['semantic_id']}"
+                result = results.get(task_id)
+                if result is None:
+                    continue
+                status = result.get("status", "MISSING")
+                index = (
+                    parse_single_label(result.get("output_text", "") or "", labels)
+                    if status == "SUCCESS"
+                    else None
+                )
+                rows.append(
+                    {
+                        "sample_id": record.sample_id,
+                        "semantic_id": record.payload["semantic_id"],
+                        "language": language,
+                        "status": status,
+                        "gold": record.label,
+                        "predicted": labels[index] if index is not None else None,
+                        "batch_task_id": task_id,
+                    }
+                )
+            rows_by_language[language] = rows
+            continue
         for batch_index, batch in enumerate(batch_records(records, bench.batch_size)):
             task_id = f"massive-batch:{language}:{batch_index:04d}"
             result = results.get(task_id)
@@ -205,11 +284,11 @@ def score_classification(
         "manifest_hash": manifest.meta.manifest_hash,
         "dataset_revision": manifest.meta.dataset_revision,
         "label_space_size": len(labels),
-        "batch_size": bench.batch_size,
+        "batch_size": 1 if local else bench.batch_size,
         "per_language": per_language,
         "overall": overall,
         "cross_lingual": consistency,
-        "output_mode": cfg.benchmark.structured_output.classification_mode,
+        "output_mode": mode,
         "evaluators": {
             "classification_metrics": {
                 "version": evaluator.version,

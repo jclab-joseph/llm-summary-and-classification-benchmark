@@ -16,21 +16,23 @@ import httpx
 
 from llmbench.core.errors import DatasetError
 
-__all__ = ["hf_resolve_url", "download_dataset_file"]
+__all__ = ["hf_resolve_url", "download_dataset_file", "download_hf_file"]
 
 HF_ENDPOINT = os.environ.get("HF_ENDPOINT", "https://huggingface.co").rstrip("/")
 
 
-def hf_resolve_url(repo: str, revision: str, path: str) -> str:
-    return f"{HF_ENDPOINT}/datasets/{repo}/resolve/{revision}/{path}"
+def hf_resolve_url(repo: str, revision: str, path: str, repo_type: str = "datasets") -> str:
+    prefix = "" if repo_type == "models" else f"{repo_type}/"
+    return f"{HF_ENDPOINT}/{prefix}{repo}/resolve/{revision}/{path}"
 
 
-def download_dataset_file(
+def download_hf_file(
     repo: str,
     revision: str,
     path: str,
     dest_dir: Path,
     *,
+    repo_type: str = "datasets",
     timeout: float = 300.0,
     force: bool = False,
     progress=None,
@@ -47,7 +49,7 @@ def download_dataset_file(
     if dest.is_file() and dest.stat().st_size > 0 and not force:
         return dest
 
-    url = hf_resolve_url(repo, revision, path)
+    url = hf_resolve_url(repo, revision, path, repo_type)
     headers = {}
     token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
     if token:
@@ -75,3 +77,14 @@ def download_dataset_file(
 
     tmp.replace(dest)
     return dest
+
+
+def download_dataset_file(
+    repo: str,
+    revision: str,
+    path: str,
+    dest_dir: Path,
+    **kwargs,
+) -> Path:
+    """Backwards-compatible wrapper: datasets are the common case."""
+    return download_hf_file(repo, revision, path, dest_dir, repo_type="datasets", **kwargs)

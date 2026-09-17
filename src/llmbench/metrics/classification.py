@@ -12,6 +12,7 @@ __all__ = [
     "CLASSIFICATION_EVALUATOR",
     "parse_batch_answer",
     "parse_batch_json_answer",
+    "parse_single_label",
     "classification_scores",
     "cross_lingual_consistency",
 ]
@@ -99,6 +100,19 @@ def parse_batch_json_answer(
         if isinstance(value, str) and value in index:
             answers[position] = index[value]
     return answers
+
+
+def parse_single_label(text: str, label_space: Sequence[str]) -> int | None:
+    """Parse a reply that is just the intent name.
+
+    A constrained decoder can only emit a label, so anything else means the
+    engine misbehaved -- it is reported invalid rather than matched loosely.
+    """
+    if not text:
+        return None
+    candidate = text.strip().strip("`\"'").strip()
+    index = {label: position for position, label in enumerate(label_space)}
+    return index.get(candidate)
 
 
 def _macro_f1(golds: Sequence[str], preds: Sequence[str | None], labels: Sequence[str]) -> float:

@@ -1,0 +1,45 @@
+# Locally executed models.
+#
+# This is a separate track from config/models.yaml, which stays OpenRouter-only.
+# A local engine is not a second API vendor: nothing is billed, so cost columns
+# are empty rather than zero, and the reports mark these rows as local.
+#
+# Only the classification benchmark supports local execution today. The engine
+# is constrained to the frozen 60-intent label space by a GBNF grammar, so an
+# unparseable answer is impossible by construction -- the same guarantee the
+# hosted `--classification-mode json_schema` buys from the provider.
+version: 1
+
+models:
+  - model_id: local/qwen2.5-1.5b-instruct-q8-gguf
+    display_name: Qwen2.5 1.5B Instruct (GGUF Q8_0, local)
+    vendor: qwen
+    provider: local
+    enabled: true
+    engine: llama_cpp
+    source:
+      repo: Qwen/Qwen2.5-1.5B-Instruct-GGUF
+      filename: qwen2.5-1.5b-instruct-q8_0.gguf
+      # Pinned like every dataset in this project: the weights are part of the
+      # benchmark's identity, and they are hashed into the inference cache key.
+      revision: 91cad51170dc346986eccefdc2dd33a9da36ead9
+    runtime:
+      n_ctx: 4096
+      # null lets llama.cpp choose; set a number to make throughput reproducible.
+      n_threads: null
+      # How many of the model's 28 layers run on the GPU. 0 = CPU only.
+      #
+      # This is NOT just a speed knob: the CUDA and CPU kernels disagree on about
+      # 1.2% of answers (240 sampled utterances, 3 differed), so it is part of the
+      # inference cache key and changing it re-runs the benchmark.
+      #
+      # 20 fits a 4 GB card that is also driving a desktop (~1.9 GB free) and is
+      # ~3x faster than CPU here: 13 min vs 40 min for 2,000 utterances. Raise it
+      # if you have more free VRAM; llama.cpp aborts the process outright if the
+      # weights do not fit, so it fails loudly rather than silently falling back.
+      n_gpu_layers: 20
+      n_batch: 512
+      seed: 0
+      temperature: 0.0
+      top_p: 1.0
+      max_label_tokens: 32

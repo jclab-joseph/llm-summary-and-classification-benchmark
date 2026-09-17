@@ -14,6 +14,7 @@ from llmbench.benchmarks.classification import (
     score_classification,
     uses_structured_output,
 )
+from llmbench.config.schema import LocalModelConfig
 from llmbench.benchmarks.hallucination import build_hallucination_tasks, score_hallucination
 from llmbench.benchmarks.summarization import build_summarization_tasks, score_summarization
 from llmbench.budget import BenchmarkEstimate, BudgetGuard, estimate_tasks
@@ -137,13 +138,21 @@ class BenchmarkRunner:
             raise BenchmarkError(f"unknown benchmark(s): {unknown}. Available: {list(ALL_BENCHMARKS)}")
         langs = list(languages) if languages else ["en", "ko"]
 
+        local_only_skips: dict[str, str] = {}
+        if model.provider == "local":
+            # Local execution is implemented for classification only; the other two
+            # benchmarks need free-form generation, which this track does not cover.
+            for name in [b for b in selected if b != "classification"]:
+                local_only_skips[name] = "local engines run the classification benchmark only"
+            selected = [b for b in selected if b == "classification"]
+
         manifests = self.manifests()
         alias_resolution = (
             self.store.last_resolved_model(model.model_id) if model.uses_alias else None
         )
 
         groups: dict[str, TaskGroup] = {}
-        skipped: dict[str, str] = {}
+        skipped: dict[str, str] = dict(local_only_skips)
 
         if "summarization" in selected:
             manifest = manifests.get("summarization")
@@ -250,6 +259,7 @@ class BenchmarkRunner:
             reasoning=model.reasoning.to_request_payload() if model.supports("reasoning") else None,
             provider=model.routing.to_request_payload(),
             response_format=task.response_format if model.supports_json_schema() else None,
+            candidates=task.candidates,
         )
 
     def _persist(
@@ -265,7 +275,7 @@ class BenchmarkRunner:
             {
                 "cache_key": task.cache_key,
                 "run_id": run_id,
-                "api_provider": "openrouter",
+                "api_provider": model.provider,
                 "model_id": model.model_id,
                 "requested_model": model.model_id,
                 "resolved_model": response.resolved_model,
@@ -556,6 +566,7 @@ class BenchmarkRunner:
                 self.cfg,
                 manifests["classification"],
                 results,
+                model=plan.model,
                 metric_cache=metric_cache,
                 languages=plan.languages,
             )
@@ -625,7 +636,7 @@ class BenchmarkRunner:
         use_metric_cache: bool = True,
     ) -> RunOutcome:
         own_client = client is None
-        client = client or self._make_client(dry_run=dry_run)
+        client = client or self._make_client(dry_run=dry_run, model=model)
 
         try:
             pricing = self.pricing.resolve(model.model_id)
@@ -662,7 +673,9 @@ class BenchmarkRunner:
             # blocking problem.
             selected_benchmarks = list(benchmarks) if benchmarks else list(ALL_BENCHMARKS)
             needs_response_format = (
-                "classification" in selected_benchmarks and uses_structured_output(self.cfg)
+                model.provider == "openrouter"
+                and "classification" in selected_benchmarks
+                and uses_structured_output(self.cfg)
             )
             preflight = self.preflight_capabilities(
                 model, metadata, include_response_format=needs_response_format
@@ -823,11 +836,22 @@ class BenchmarkRunner:
                 await client.aclose()
 
     # ------------------------------------------------------------------ #
-    def _make_client(self, *, dry_run: bool) -> OpenRouterClient:
+    def _make_client(self, *, dry_run: bool, model: ModelConfig | None = None):
         if self._client_factory is not None:
             client = self._client_factory()
             client.dry_run = dry_run
             return client
+        if isinstance(model, LocalModelConfig):
+            from llmbench.local.client import LocalEngineClient
+            from llmbench.local.download import ensure_local_model
+
+            return LocalEngineClient(
+                engine=model.engine,
+                model_id=model.model_id,
+                model_path=ensure_local_model(self.cfg, model),
+                runtime=model.runtime.model_dump(),
+                dry_run=dry_run,
+            )
         retry = self.cfg.benchmark.retry
         return OpenRouterClient(
             timeout=self.cfg.benchmark.concurrency.request_timeout_seconds,
@@ -867,6 +891,9 @@ class BenchmarkRunner:
             "generation": self.cfg.benchmark.generation.cache_material(),
             "truncation_policy": self.cfg.benchmark.truncation.cache_material(),
             "structured_output": self.cfg.benchmark.structured_output.model_dump(),
+            "local_engine": (
+                plan.model.engine_material() if isinstance(plan.model, LocalModelConfig) else None
+            ),
             "prompt_versions": PROMPT_VERSIONS,
             "metric_versions": {
                 "rouge": self.cfg.benchmark.metrics.rouge.version,

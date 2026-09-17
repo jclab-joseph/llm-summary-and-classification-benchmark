@@ -79,6 +79,7 @@ def render_html_report(cfg: AppConfig, rows: list[dict[str, Any]], summaries: li
     leaderboard_rows = [
         [
             html.escape(str(row["model"])),
+            html.escape(str(row.get("api_provider", "openrouter"))),
             _fmt(row["input_per_million"]),
             _fmt(row["output_per_million"]),
             _fmt(row["summary_en"]),

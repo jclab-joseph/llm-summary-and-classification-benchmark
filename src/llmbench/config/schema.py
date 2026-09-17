@@ -172,7 +172,10 @@ OPENROUTER_PARAMETER_NAMES: dict[str, tuple[str, ...]] = {
 
 
 class ModelConfig(StrictModel):
-    provider: Literal["openrouter"] = "openrouter"
+    # `local` is only ever set from config/local_models.yaml; ModelsConfig still
+    # rejects anything but `openrouter`, so the hosted benchmark keeps its single
+    # provider invariant.
+    provider: Literal["openrouter", "local"] = "openrouter"
     model_id: str
     display_name: str
     vendor: str
@@ -288,6 +291,70 @@ class ModelsConfig(StrictModel):
             if m.role == role:
                 return m
         return None
+
+
+class LocalSource(StrictModel):
+    """Where the weights come from. Pinned like every other dataset artifact."""
+
+    repo: str
+    filename: str
+    revision: str
+
+
+class LocalRuntime(StrictModel):
+    n_ctx: int = 4096
+    n_threads: int | None = None
+    n_gpu_layers: int = 0
+    n_batch: int = 512
+    seed: int = 0
+    temperature: float = 0.0
+    top_p: float = 1.0
+    max_label_tokens: int = 32
+
+    def cache_material(self) -> dict[str, Any]:
+        # n_threads and n_batch change throughput, not the answer, so they are
+        # excluded: a different thread count must not re-run the benchmark.
+        return {
+            "n_ctx": self.n_ctx,
+            "n_gpu_layers": self.n_gpu_layers,
+            "seed": self.seed,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "max_label_tokens": self.max_label_tokens,
+        }
+
+
+class LocalModelConfig(ModelConfig):
+    """A model executed locally instead of through OpenRouter."""
+
+    provider: Literal["local"] = "local"
+    engine: str = "llama_cpp"
+    source: LocalSource
+    runtime: LocalRuntime = Field(default_factory=LocalRuntime)
+
+    def engine_material(self) -> dict[str, Any]:
+        """Everything about the local setup that changes the answer."""
+        return {
+            "engine": self.engine,
+            "repo": self.source.repo,
+            "filename": self.source.filename,
+            "revision": self.source.revision,
+            "runtime": self.runtime.cache_material(),
+        }
+
+
+class LocalModelsConfig(StrictModel):
+    version: int = 1
+    models: list[LocalModelConfig] = Field(default_factory=list)
+
+    def by_id(self, model_id: str) -> LocalModelConfig | None:
+        for model in self.models:
+            if model.model_id == model_id:
+                return model
+        return None
+
+    def enabled_models(self) -> list[LocalModelConfig]:
+        return [m for m in self.models if m.enabled]
 
 
 class PricingEntry(StrictModel):

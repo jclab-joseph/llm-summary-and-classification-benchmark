@@ -2,7 +2,7 @@
 
 <!-- 이 파일은 `benchmark report` 가 자동 생성합니다. 직접 수정하지 마세요. -->
 
-생성: `2026-09-17T00:38:53+00:00` · benchmark version `1.0.0` · API provider: **OpenRouter**
+생성: `2026-09-17T01:56:24+00:00` · benchmark version `1.0.0` · API provider: **OpenRouter**
 
 같은 데이터를 담은 스프레드시트: [`results/benchmark_results.xlsx`](results/benchmark_results.xlsx)
 
@@ -34,15 +34,16 @@ OpenRouter 요청 1,300건입니다.
 
 각 벤치마크의 대표 지표만 모은 표입니다. `Summary` 는 ROUGE-Lsum, `Halu` 는 HALLUCINATED F1, `Cls` 는 정확도, `EN-KO` 는 교차 일관성입니다. 자세한 값은 아래 벤치마크별 표를 보세요. 정렬 기준은 분류 전체 정확도입니다.
 
-| Model | Input $/M | Output $/M | Summary EN | Summary KO | Halu EN F1 | Halu KO F1 | Cls EN | Cls KO | EN-KO | Input Tokens | Output Tokens | OpenRouter Cost | Judge Cost |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| google/gemini-2.5-flash-lite | $0.1000 | $0.4000 | 0.1401 | 0.2298 | 0.4604 | 0.5353 | 0.0080 | 0.0130 | 0.9790 | 844,524 | 24,718 | $0.094340 | $0.000000 |
+| Model | API | Input $/M | Output $/M | Summary EN | Summary KO | Halu EN F1 | Halu KO F1 | Cls EN | Cls KO | EN-KO | Input Tokens | Output Tokens | OpenRouter Cost | Judge Cost |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| google/gemini-2.5-flash-lite | openrouter | $0.1000 | $0.4000 | 0.1401 | 0.2298 | 0.4604 | 0.5353 | 0.0080 | 0.0130 | 0.9790 | 844,524 | 24,718 | $0.094340 | $0.000000 |
 
 <details><summary>지표 설명</summary>
 
 | 지표 | 방향 | 의미 |
 | --- | :--: | --- |
-| Input $/M, Output $/M | ↓ | 100만 토큰당 가격(USD). 실행 시점 OpenRouter 가격 스냅샷. |
+| API | — | `openrouter` = 호스팅 API, `local` = 이 머신에서 실행. local 은 과금이 없어 비용 열이 비어 있습니다(0이 아니라 해당 없음). |
+| Input $/M, Output $/M | ↓ | 100만 토큰당 가격(USD). 실행 시점 OpenRouter 가격 스냅샷. local 은 해당 없음. |
 | Summary EN / KO | ↑ | 요약 ROUGE-Lsum F1 (0~1). |
 | Halu EN / KO F1 | ↑ | 환각 탐지에서 HALLUCINATED 를 양성으로 본 F1 (0~1). |
 | Cls EN / KO | ↑ | 분류 정확도 (0~1). 무작위는 약 0.017. |
@@ -115,6 +116,10 @@ XL-Sum(BBC 뉴스)의 기사를 1~3문장으로 요약시키고, 기사에 딸�
 MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다. 비용 절감을
 위해 20건씩 묶어 한 요청으로 보내고, `<번호>: <인텐트 번호>` 형식으로 답하게 합니다.
 **무작위 추측의 정확도는 1/60 ≈ 0.017** 입니다.
+
+리더보드의 `API` 열이 `local` 인 행은 이 머신에서 직접 실행한 모델입니다. 과금이 없어 비용
+열이 비어 있고(0이 아니라 해당 없음), 묶음 요청 대신 **발화 1건당 프롬프트 1개**로 돌기
+때문에 배치 형식 부담이 없습니다. 호스팅 행과 나란히 놓고 볼 때 이 차이를 감안하세요.
 
 | Model | Scope | Cases | Accuracy | Macro-F1 | Invalid |
 | --- | --- | ---: | ---: | ---: | ---: |
@@ -233,5 +238,5 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 
 | Model | Status | 실행 시각(UTC) | Bench ver. | Git commit | Cases | XL-Sum | HaluEval | AI-Hub | MASSIVE |
 | --- | --- | --- | --- | --- | ---: | --- | --- | --- | --- |
-| google/gemini-2.5-flash-lite | COMPLETED | 2026-09-17T00:38:50+00:00 | 1.0.0 | 259eab707098 | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
+| google/gemini-2.5-flash-lite | COMPLETED | 2026-09-17T01:56:22+00:00 | 1.0.0 | 7d940a780adb | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 

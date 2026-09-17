@@ -39,6 +39,8 @@ class Task:
     est_input_tokens: int
     est_output_tokens: int
     response_format: dict[str, Any] | None = None
+    # Answer set for a backend that constrains decoding to it (local engines).
+    candidates: list[str] | None = None
     meta: dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -73,7 +75,9 @@ def make_task(
     prompt: RenderedPrompt,
     answer_tokens: int,
     response_format: dict[str, Any] | None = None,
+    candidates: list[str] | None = None,
     structured_output_version: str | None = None,
+    extra: dict[str, Any] | None = None,
     alias_resolution: str | None = None,
     meta: dict[str, Any] | None = None,
 ) -> Task:
@@ -116,9 +120,10 @@ def make_task(
         # The response schema is part of the request, so a change to it has to
         # produce a different key -- otherwise a cached answer would be credited
         # to a schema that never produced it.
-        extra=(
-            {"response_format_hash": hash_obj(response_format)} if response_format else {}
-        ),
+        extra={
+            **(extra or {}),
+            **({"response_format_hash": hash_obj(response_format)} if response_format else {}),
+        },
         truncation_policy_version=cfg.benchmark.truncation.version,
         generation_config_version=generation.version,
         alias_resolution=alias_resolution,
@@ -139,5 +144,6 @@ def make_task(
         est_input_tokens=estimate_tokens(prompt.system) + estimate_tokens(prompt.user) + 8,
         est_output_tokens=model.estimated_output_tokens(answer_tokens),
         response_format=response_format,
+        candidates=candidates,
         meta=meta or {},
     )

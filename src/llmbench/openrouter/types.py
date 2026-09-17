@@ -157,6 +157,9 @@ class GenerationRequest:
     reasoning: dict[str, Any] | None = None
     provider: dict[str, Any] | None = None
     response_format: dict[str, Any] | None = None
+    # Answer set for backends that constrain decoding to it. OpenRouter expresses
+    # the same thing through `response_format`, so this never reaches the wire.
+    candidates: list[str] | None = None
 
     def to_payload(self) -> dict[str, Any]:
         payload: dict[str, Any] = {

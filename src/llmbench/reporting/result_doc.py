@@ -101,6 +101,7 @@ def _section(
 
 LEADERBOARD_COLUMNS: list[Column] = [
     ("model", "Model", "s"),
+    ("api_provider", "API", "s"),
     ("input_per_million", "Input $/M", "price"),
     ("output_per_million", "Output $/M", "price"),
     ("summary_en", "Summary EN", "f4"),
@@ -287,7 +288,11 @@ HALLUCINATION_LEGEND: list[Legend] = [
 
 CLASSIFICATION_ABOUT = """MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다. 비용 절감을
 위해 20건씩 묶어 한 요청으로 보내고, `<번호>: <인텐트 번호>` 형식으로 답하게 합니다.
-**무작위 추측의 정확도는 1/60 ≈ 0.017** 입니다."""
+**무작위 추측의 정확도는 1/60 ≈ 0.017** 입니다.
+
+리더보드의 `API` 열이 `local` 인 행은 이 머신에서 직접 실행한 모델입니다. 과금이 없어 비용
+열이 비어 있고(0이 아니라 해당 없음), 묶음 요청 대신 **발화 1건당 프롬프트 1개**로 돌기
+때문에 배치 형식 부담이 없습니다. 호스팅 행과 나란히 놓고 볼 때 이 차이를 감안하세요."""
 
 CLASSIFICATION_LEGEND: list[Legend] = [
     ("Scope", "info", "`en` / `ko` / `overall`(두 언어 합산)."),
@@ -457,7 +462,8 @@ def render_result_markdown(
                 "아래 벤치마크별 표를 보세요. 정렬 기준은 분류 전체 정확도입니다."
             ),
             legend=[
-                ("Input $/M, Output $/M", "down", "100만 토큰당 가격(USD). 실행 시점 OpenRouter 가격 스냅샷."),
+                ("API", "info", "`openrouter` = 호스팅 API, `local` = 이 머신에서 실행. local 은 과금이 없어 비용 열이 비어 있습니다(0이 아니라 해당 없음)."),
+                ("Input $/M, Output $/M", "down", "100만 토큰당 가격(USD). 실행 시점 OpenRouter 가격 스냅샷. local 은 해당 없음."),
                 ("Summary EN / KO", "up", "요약 ROUGE-Lsum F1 (0~1)."),
                 ("Halu EN / KO F1", "up", "환각 탐지에서 HALLUCINATED 를 양성으로 본 F1 (0~1)."),
                 ("Cls EN / KO", "up", "분류 정확도 (0~1). 무작위는 약 0.017."),

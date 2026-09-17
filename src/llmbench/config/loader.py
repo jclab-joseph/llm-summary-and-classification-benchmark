@@ -14,6 +14,8 @@ import yaml
 from llmbench.config.schema import (
     BenchmarkConfig,
     JudgeConfig,
+    LocalModelConfig,
+    LocalModelsConfig,
     ModelConfig,
     ModelsConfig,
     PricingConfig,
@@ -92,6 +94,7 @@ class AppConfig:
     models: ModelsConfig
     pricing: PricingConfig
     judge: JudgeConfig
+    local_models: LocalModelsConfig
 
     # --- resolved paths --------------------------------------------------- #
     @cached_property
@@ -127,10 +130,16 @@ class AppConfig:
         return path if path.is_absolute() else (self.root / path).resolve()
 
     # --- lookups ---------------------------------------------------------- #
+    @cached_property
+    def local_model_dir(self) -> Path:
+        return self._resolve("data/local_models")
+
     def require_model(self, model_id: str) -> ModelConfig:
-        model = self.models.by_id(model_id)
+        model = self.models.by_id(model_id) or self.local_models.by_id(model_id)
         if model is None:
-            known = ", ".join(m.model_id for m in self.models.models)
+            known = ", ".join(
+                m.model_id for m in [*self.models.models, *self.local_models.models]
+            )
             raise ConfigError(f"unknown model '{model_id}'. Configured models: {known}")
         return model
 
@@ -149,6 +158,7 @@ class AppConfig:
 
     def ensure_dirs(self) -> None:
         for path in (
+            self.local_model_dir,
             self.manifest_dir,
             self.cache_db_path.parent,
             self.raw_data_dir,
@@ -166,6 +176,14 @@ def load_config(config_dir: str | Path | None = None, *, root: str | Path | None
     models = ModelsConfig.model_validate(_expand_models(_read_yaml(cfg_dir / "models.yaml")))
     pricing = PricingConfig.model_validate(_read_yaml(cfg_dir / "pricing.yaml"))
     judge = JudgeConfig.model_validate(_read_yaml(cfg_dir / "judge.yaml"))
+    # Optional: the project runs fine with no local models configured.
+    local_path = cfg_dir / "local_models.yaml"
+    if local_path.is_file():
+        expanded = _expand_models(_read_yaml(local_path))
+        expanded.pop("judges", None)  # local models are never judges
+        local_models = LocalModelsConfig.model_validate(expanded)
+    else:
+        local_models = LocalModelsConfig()
 
     return AppConfig(
         config_dir=cfg_dir,
@@ -174,4 +192,5 @@ def load_config(config_dir: str | Path | None = None, *, root: str | Path | None
         models=models,
         pricing=pricing,
         judge=judge,
+        local_models=local_models,
     )

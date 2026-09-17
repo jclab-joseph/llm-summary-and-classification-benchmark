@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-09-17T00:38:52+00:00",
-  "run_id": "run-20260917T003850-a08557e6",
+  "generated_at": "2026-09-17T01:56:24+00:00",
+  "run_id": "run-20260917T015622-8a4a3258",
   "variant": {
     "classification_mode": "text"
   },
@@ -11,6 +11,7 @@
     "model_id": "google/gemini-2.5-flash-lite",
     "display_name": "Gemini 2.5 Flash-Lite",
     "vendor": "google",
+    "provider": "openrouter",
     "safe_slug": "google__gemini-2.5-flash-lite",
     "max_output_tokens": 1024,
     "reasoning": {
@@ -72,7 +73,7 @@
       "input_per_million": 0.1,
       "output_per_million": 0.4,
       "cached_input_per_million": 0.025,
-      "retrieved_at": "2026-09-17T00:38:49+00:00",
+      "retrieved_at": "2026-09-17T01:56:21+00:00",
       "source": "openrouter"
     },
     "authoritative_source": "openrouter usage.cost",
@@ -487,7 +488,7 @@
   "reproducibility": {
     "benchmark_package_version": "1.0.0",
     "benchmark_version": "1.0.0",
-    "git_commit": "259eab707098181699d06f21498431115d9b9625",
+    "git_commit": "7d940a780adb2d63730876016bcc16115c9bd8e2",
     "git_dirty": true,
     "python_version": "3.12.3",
     "python_implementation": "CPython",
@@ -509,8 +510,8 @@
       "tenacity": "not-installed",
       "pyarrow": "25.0.1"
     },
-    "captured_at": "2026-09-17T00:38:50+00:00",
-    "executed_at": "2026-09-17T00:38:50+00:00",
+    "captured_at": "2026-09-17T01:56:22+00:00",
+    "executed_at": "2026-09-17T01:56:22+00:00",
     "api_provider": "openrouter",
     "model_id": "google/gemini-2.5-flash-lite",
     "requested_model": "google/gemini-2.5-flash-lite",
@@ -553,11 +554,13 @@
       "classification_mode": "text",
       "judge_mode": "json_schema"
     },
+    "local_engine": null,
     "prompt_versions": {
       "summarization": "sum-1",
       "hallucination": "halu-1",
       "classification": "cls-1",
       "classification_json_schema": "cls-json-1",
+      "classification_single": "cls-single-1",
       "judge": "judge-1"
     },
     "metric_versions": {
@@ -623,7 +626,7 @@
       "input_per_million": 0.1,
       "output_per_million": 0.4,
       "cached_input_per_million": 0.025,
-      "retrieved_at": "2026-09-17T00:38:49+00:00",
+      "retrieved_at": "2026-09-17T01:56:21+00:00",
       "source": "openrouter"
     }
   }

@@ -44,6 +44,34 @@ def summary_filename(variant: dict[str, str]) -> str:
     return f"summary.classification-{mode}.json"
 
 
+_UNBILLED_COST_FIELDS = (
+    "summarization_cost",
+    "hallucination_cost",
+    "classification_cost",
+    "retry_error_cost",
+    "judge_cost",
+    "total_openrouter_cost",
+    "fresh_cost_this_run",
+    "stored_benchmark_cost",
+    "estimated_cost_without_cache",
+    "estimated_cache_savings",
+)
+
+
+def _local_cost(cost: dict[str, Any]) -> dict[str, Any]:
+    """Blank out cost for a local run.
+
+    `None` rather than `0.0`: nothing was billed, which is a different claim from
+    "billed zero". A zero would sit in the leaderboard's cost column looking like
+    the cheapest hosted model in the table.
+    """
+    out = {key: (None if key in _UNBILLED_COST_FIELDS else value) for key, value in cost.items()}
+    out["billing"] = "not applicable - local inference, nothing was billed"
+    out["by_benchmark"] = {}
+    out.pop("reconciliation", None)
+    return out
+
+
 def build_model_summary(cfg: AppConfig, outcome: RunOutcome) -> dict[str, Any]:
     """Everything about one model's run, minus the raw OpenRouter payloads.
 
@@ -60,11 +88,12 @@ def build_model_summary(cfg: AppConfig, outcome: RunOutcome) -> dict[str, Any]:
         "run_id": outcome.run_id,
         "variant": run_variant(cfg),
         "status": outcome.status,
-        "api_provider": "openrouter",
+        "api_provider": plan.model.provider,
         "model": {
             "model_id": plan.model.model_id,
             "display_name": plan.model.display_name,
             "vendor": plan.model.vendor,
+            "provider": plan.model.provider,
             "safe_slug": plan.model.safe_slug,
             "max_output_tokens": plan.model.max_output_tokens,
             "reasoning": plan.model.reasoning.cache_material(),
@@ -95,7 +124,9 @@ def build_model_summary(cfg: AppConfig, outcome: RunOutcome) -> dict[str, Any]:
             "total_tokens": usage.get("total_tokens", 0),
             "successful_cases": usage.get("cases", 0),
         },
-        "cost": outcome.cost,
+        "cost": (
+            _local_cost(outcome.cost) if plan.model.provider == "local" else outcome.cost
+        ),
         "failures": outcome.failures,
         "failure_guard": outcome.failure_summary,
         "preflight": outcome.preflight,

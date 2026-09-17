@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-09-17T01:56:24+00:00",
-  "run_id": "run-20260917T015622-8a4a3258",
+  "generated_at": "2026-09-17T03:05:17+00:00",
+  "run_id": "run-20260917T030515-f5f4b29b",
   "variant": {
     "classification_mode": "text"
   },
@@ -73,7 +73,7 @@
       "input_per_million": 0.1,
       "output_per_million": 0.4,
       "cached_input_per_million": 0.025,
-      "retrieved_at": "2026-09-17T01:56:21+00:00",
+      "retrieved_at": "2026-09-17T03:05:14+00:00",
       "source": "openrouter"
     },
     "authoritative_source": "openrouter usage.cost",
@@ -488,7 +488,7 @@
   "reproducibility": {
     "benchmark_package_version": "1.0.0",
     "benchmark_version": "1.0.0",
-    "git_commit": "7d940a780adb2d63730876016bcc16115c9bd8e2",
+    "git_commit": "62bd51cc58aff3b5128149c0e7098fc7bb1caa80",
     "git_dirty": true,
     "python_version": "3.12.3",
     "python_implementation": "CPython",
@@ -510,8 +510,8 @@
       "tenacity": "not-installed",
       "pyarrow": "25.0.1"
     },
-    "captured_at": "2026-09-17T01:56:22+00:00",
-    "executed_at": "2026-09-17T01:56:22+00:00",
+    "captured_at": "2026-09-17T03:05:16+00:00",
+    "executed_at": "2026-09-17T03:05:16+00:00",
     "api_provider": "openrouter",
     "model_id": "google/gemini-2.5-flash-lite",
     "requested_model": "google/gemini-2.5-flash-lite",
@@ -626,7 +626,7 @@
       "input_per_million": 0.1,
       "output_per_million": 0.4,
       "cached_input_per_million": 0.025,
-      "retrieved_at": "2026-09-17T01:56:21+00:00",
+      "retrieved_at": "2026-09-17T03:05:14+00:00",
       "source": "openrouter"
     }
   }

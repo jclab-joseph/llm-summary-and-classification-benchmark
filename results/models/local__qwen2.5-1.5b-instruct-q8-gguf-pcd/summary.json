@@ -1,18 +1,18 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-09-17T03:02:41+00:00",
-  "run_id": "run-20260917T030240-7b921abc",
+  "generated_at": "2026-09-17T03:02:38+00:00",
+  "run_id": "run-20260917T023435-d6148d1a",
   "variant": {
     "classification_mode": "text"
   },
   "status": "COMPLETED",
   "api_provider": "local",
   "model": {
-    "model_id": "local/qwen2.5-1.5b-instruct-q8-gguf",
-    "display_name": "Qwen2.5 1.5B Q8 - grammar-guided generation (baseline)",
+    "model_id": "local/qwen2.5-1.5b-instruct-q8-gguf-pcd",
+    "display_name": "Qwen2.5 1.5B Q8 - parallel constrained decoding",
     "vendor": "qwen",
     "provider": "local",
-    "safe_slug": "local__qwen2.5-1.5b-instruct-q8-gguf",
+    "safe_slug": "local__qwen2.5-1.5b-instruct-q8-gguf-pcd",
     "max_output_tokens": 256,
     "reasoning": {
       "enabled": false,
@@ -47,27 +47,27 @@
     "skipped": {}
   },
   "cache": {
-    "cache_hits": 2000,
-    "cache_misses": 0,
-    "openrouter_api_calls": 0,
-    "openrouter_http_attempts": 0,
+    "cache_hits": 0,
+    "cache_misses": 2000,
+    "openrouter_api_calls": 2000,
+    "openrouter_http_attempts": 2000,
     "metric_cache": {
       "hits": 0,
       "misses": 0
     }
   },
   "usage": {
-    "prompt_tokens": 1441986,
+    "prompt_tokens": 720993,
     "cached_tokens": 0,
     "cache_write_tokens": 0,
-    "completion_tokens": 10903,
+    "completion_tokens": 0,
     "reasoning_tokens": 0,
-    "total_tokens": 1452889,
-    "successful_cases": 4000
+    "total_tokens": 720993,
+    "successful_cases": 2000
   },
   "cost": {
     "pricing_snapshot": {
-      "model_id": "local/qwen2.5-1.5b-instruct-q8-gguf",
+      "model_id": "local/qwen2.5-1.5b-instruct-q8-gguf-pcd",
       "input_per_million": null,
       "output_per_million": null,
       "cached_input_per_million": null,
@@ -89,15 +89,15 @@
     "attempts": {
       "by_status": {
         "SUCCESS": {
-          "count": 4000,
+          "count": 2000,
           "usage_cost": 0.0
         }
       },
-      "success_attempts": 4000,
+      "success_attempts": 2000,
       "success_cost": 0.0,
       "error_attempts": 0,
       "error_cost": 0,
-      "total_attempts": 4000,
+      "total_attempts": 2000,
       "total_cost": 0.0
     },
     "billing": "not applicable - local inference, nothing was billed"
@@ -107,7 +107,7 @@
     "enabled": true,
     "tripped": false,
     "reason": null,
-    "attempts": 0,
+    "attempts": 2000,
     "failures": 0,
     "failure_rate": 0.0,
     "consecutive_failures": 0,
@@ -137,9 +137,9 @@
       "per_language": {
         "en": {
           "cases": 1000,
-          "accuracy": 0.575,
-          "macro_f1": 0.5459294856069367,
-          "correct": 575,
+          "accuracy": 0.573,
+          "macro_f1": 0.5388418311648718,
+          "correct": 573,
           "invalid_outputs": 0,
           "invalid_output_rate": 0.0,
           "failed_cases": 0,
@@ -147,9 +147,9 @@
         },
         "ko": {
           "cases": 1000,
-          "accuracy": 0.462,
-          "macro_f1": 0.4217011621299711,
-          "correct": 462,
+          "accuracy": 0.457,
+          "macro_f1": 0.41358678248538394,
+          "correct": 457,
           "invalid_outputs": 0,
           "invalid_output_rate": 0.0,
           "failed_cases": 0,
@@ -158,9 +158,9 @@
       },
       "overall": {
         "cases": 2000,
-        "accuracy": 0.5185,
-        "macro_f1": 0.4882467464725742,
-        "correct": 1037,
+        "accuracy": 0.515,
+        "macro_f1": 0.48140691975192446,
+        "correct": 1030,
         "invalid_outputs": 0,
         "invalid_output_rate": 0.0,
         "failed_cases": 0,
@@ -168,16 +168,16 @@
       },
       "cross_lingual": {
         "paired_cases": 1000,
-        "prediction_agreement": 0.555,
-        "consistency": 0.713,
-        "both_correct": 375,
-        "both_correct_rate": 0.375,
-        "en_only_correct": 200,
-        "en_only_correct_rate": 0.2,
-        "ko_only_correct": 87,
-        "ko_only_correct_rate": 0.087,
-        "both_wrong": 338,
-        "both_wrong_rate": 0.338
+        "prediction_agreement": 0.562,
+        "consistency": 0.726,
+        "both_correct": 378,
+        "both_correct_rate": 0.378,
+        "en_only_correct": 195,
+        "en_only_correct_rate": 0.195,
+        "ko_only_correct": 79,
+        "ko_only_correct_rate": 0.079,
+        "both_wrong": 348,
+        "both_wrong_rate": 0.348
       },
       "output_mode": "local_constrained",
       "evaluators": {
@@ -218,11 +218,11 @@
       "tenacity": "not-installed",
       "pyarrow": "25.0.1"
     },
-    "captured_at": "2026-09-17T03:02:40+00:00",
-    "executed_at": "2026-09-17T03:02:40+00:00",
+    "captured_at": "2026-09-17T02:34:35+00:00",
+    "executed_at": "2026-09-17T02:34:35+00:00",
     "api_provider": "openrouter",
-    "model_id": "local/qwen2.5-1.5b-instruct-q8-gguf",
-    "requested_model": "local/qwen2.5-1.5b-instruct-q8-gguf",
+    "model_id": "local/qwen2.5-1.5b-instruct-q8-gguf-pcd",
+    "requested_model": "local/qwen2.5-1.5b-instruct-q8-gguf-pcd",
     "alias_resolution": null,
     "uses_alias": false,
     "routing_config": {
@@ -263,7 +263,7 @@
       "judge_mode": "json_schema"
     },
     "local_engine": {
-      "engine": "llama_cpp",
+      "engine": "llama_cpp_pcd",
       "repo": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
       "filename": "qwen2.5-1.5b-instruct-q8_0.gguf",
       "revision": "91cad51170dc346986eccefdc2dd33a9da36ead9",
@@ -343,7 +343,7 @@
       }
     },
     "pricing_snapshot": {
-      "model_id": "local/qwen2.5-1.5b-instruct-q8-gguf",
+      "model_id": "local/qwen2.5-1.5b-instruct-q8-gguf-pcd",
       "input_per_million": null,
       "output_per_million": null,
       "cached_input_per_million": null,

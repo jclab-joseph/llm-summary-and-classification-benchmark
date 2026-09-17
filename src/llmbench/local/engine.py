@@ -40,7 +40,11 @@ class LocalEngine(Protocol):
 
 
 ENGINES: dict[str, str] = {
+    # Grammar-guided generation: the baseline the parallel engine is measured
+    # against. The answer is generated token by token, masked to valid labels.
     "llama_cpp": "llmbench.local.llama_cpp_engine:LlamaCppEngine",
+    # Parallel constrained decoding: the answer is read out of the logits.
+    "llama_cpp_pcd": "llmbench.local.pcd_engine:ParallelConstrainedEngine",
 }
 
 

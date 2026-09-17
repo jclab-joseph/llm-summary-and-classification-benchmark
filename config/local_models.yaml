@@ -22,6 +22,9 @@ models:
     # candidates sharing a prefix. Nothing is generated: the answer is read out
     # of the logits, with a calibrated probability.
     engine: llama_cpp_pcd
+    # Bump when the decoding algorithm changes, so results are never pooled
+    # across two different implementations.
+    algorithm_version: "pcd-2"
     source:
       repo: Qwen/Qwen2.5-1.5B-Instruct-GGUF
       filename: qwen2.5-1.5b-instruct-q8_0.gguf
@@ -35,6 +38,9 @@ models:
       temperature: 0.0
       top_p: 1.0
       max_label_tokens: 32
+      # KV sequences for broadcasting tree branches. Throughput only: running out
+      # raises rather than truncating the search.
+      n_seq_max: 32
 
   - model_id: local/qwen2.5-1.5b-instruct-q8-gguf
     display_name: Qwen2.5 1.5B Q8 - grammar-guided generation (baseline)

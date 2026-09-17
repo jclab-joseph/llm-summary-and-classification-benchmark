@@ -310,10 +310,13 @@ class LocalRuntime(StrictModel):
     temperature: float = 0.0
     top_p: float = 1.0
     max_label_tokens: int = 32
+    # KV sequences available for broadcasting tree branches. It bounds throughput
+    # only: running out is an error, never a silently truncated search.
+    n_seq_max: int = 32
 
     def cache_material(self) -> dict[str, Any]:
-        # n_threads and n_batch change throughput, not the answer, so they are
-        # excluded: a different thread count must not re-run the benchmark.
+        # n_threads, n_batch and n_seq_max change throughput, not the answer, so
+        # they are excluded: a different thread count must not re-run everything.
         return {
             "n_ctx": self.n_ctx,
             "n_gpu_layers": self.n_gpu_layers,
@@ -329,6 +332,9 @@ class LocalModelConfig(ModelConfig):
 
     provider: Literal["local"] = "local"
     engine: str = "llama_cpp"
+    # Version of the decoding algorithm itself. Bumping it re-runs the benchmark
+    # rather than pooling answers produced by two different implementations.
+    algorithm_version: str = "1"
     source: LocalSource
     runtime: LocalRuntime = Field(default_factory=LocalRuntime)
 
@@ -336,6 +342,7 @@ class LocalModelConfig(ModelConfig):
         """Everything about the local setup that changes the answer."""
         return {
             "engine": self.engine,
+            "algorithm_version": self.algorithm_version,
             "repo": self.source.repo,
             "filename": self.source.filename,
             "revision": self.source.revision,

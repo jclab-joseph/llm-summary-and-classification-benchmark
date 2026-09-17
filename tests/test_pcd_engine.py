@@ -17,65 +17,95 @@ from llmbench.local.pcd_engine import ParallelConstrainedEngine, TokenTree, buil
 VOCAB = 16
 
 
+class StubBatchStruct:
+    """Mimics the fields of llama.cpp's `llama_batch` that the engine fills."""
+
+    def __init__(self, capacity: int = 64) -> None:
+        self.n_tokens = 0
+        self.token = [0] * capacity
+        self.pos = [0] * capacity
+        self.n_seq_id = [0] * capacity
+        self.seq_id = [[0] for _ in range(capacity)]
+        self.logits = [False] * capacity
+
+
+class StubBatch:
+    def __init__(self, capacity: int = 64) -> None:
+        self.batch = StubBatchStruct(capacity)
+        self._n_tokens = capacity
+
+    def close(self) -> None:
+        pass
+
+
 class StubContext:
-    def __init__(self, owner: "StubLlama") -> None:
-        self.owner = owner
-
-    def kv_cache_seq_rm(self, seq_id: int, p0: int, p1: int) -> None:
-        self.owner.rewinds.append(p0)
-
-    def get_logits(self):
-        return self.owner.logits_for(tuple(self.owner.path))
-
-
-class StubLlama:
-    """Returns scripted logits keyed by the token path evaluated so far."""
+    """Scripted logits keyed by the token path a sequence has accumulated."""
 
     def __init__(self, table: dict[tuple[int, ...], Sequence[float]]) -> None:
         self.table = table
-        self.path: list[int] = []
-        self.n_tokens = 0
-        self._n_vocab = VOCAB
-        self._ctx = StubContext(self)
-        self.evals = 0
-        self.rewinds: list[int] = []
+        self.seq_paths: dict[int, tuple[int, ...]] = {0: ()}
+        self.decodes = 0
+        self.batched_sizes: list[int] = []
+        self.copies: list[tuple[int, int]] = []
+        self.removed: list[int] = []
+        self._logits: list[np.ndarray] = []
 
-    def logits_for(self, path: tuple[int, ...]):
-        values = self.table.get(path)
-        if values is None:
-            values = [0.0] * VOCAB
-        return np.array(values, dtype=np.float32)
+    def logits_for(self, path: tuple[int, ...]) -> np.ndarray:
+        return np.array(self.table.get(path, [0.0] * VOCAB), dtype=np.float32)
 
-    def tokenize(self, text: bytes, add_bos: bool = False, special: bool = False):
-        return [1, 2, 3]
+    def decode(self, batch: StubBatch) -> None:
+        raw = batch.batch
+        self.decodes += 1
+        self.batched_sizes.append(raw.n_tokens)
+        self._logits = []
+        for index in range(raw.n_tokens):
+            seq = raw.seq_id[index][0]
+            path = self.seq_paths.get(seq, ()) + (raw.token[index],)
+            self.seq_paths[seq] = path
+            self._logits.append(self.logits_for(path))
 
-    def eval(self, tokens: Sequence[int]) -> None:
-        self.evals += 1
-        self.path.extend(tokens)
-        self.n_tokens += len(tokens)
+    def get_logits_ith(self, index: int) -> np.ndarray:
+        return self._logits[index]
 
-    def reset(self) -> None:
-        self.path.clear()
-        self.n_tokens = 0
+    def kv_cache_seq_cp(self, src: int, dst: int, p0: int, p1: int) -> None:
+        self.copies.append((src, dst))
+        self.seq_paths[dst] = self.seq_paths.get(src, ())
+
+    def kv_cache_seq_rm(self, seq_id: int, p0: int, p1: int) -> None:
+        self.removed.append(seq_id)
+        if p0 <= 0:
+            self.seq_paths[seq_id] = ()
+
+    def close(self) -> None:
+        pass
 
 
-def make_engine(table, tokenized) -> ParallelConstrainedEngine:
+def make_engine(table, n_seq_max: int = 8) -> ParallelConstrainedEngine:
     engine = ParallelConstrainedEngine.__new__(ParallelConstrainedEngine)
     engine.model_path = __import__("pathlib").Path("stub.gguf")
     engine.runtime = {}
     engine._trees = {}
     engine._prefix_tokens = []
-    engine.telemetry = {"prefill_tokens": 0, "forward_passes": 0, "prefix_reused": 0}
-    engine._llm = StubLlama(table)
-    engine._tokenized = tokenized
+    engine.telemetry = {
+        "prefill_tokens": 0,
+        "decodes": 0,
+        "branches_evaluated": 0,
+        "prefix_reused": 0,
+    }
+    engine.n_seq_max = n_seq_max
+    engine._free_seqs = list(range(1, n_seq_max))
+    engine._ctx = StubContext(table)
+    engine._batch = StubBatch()
+    engine._n_vocab = VOCAB
+    engine._prompt_len = 0
     return engine
 
 
-def score_candidates(engine, tree, root_logits) -> dict:
+def score_candidates(engine, tree, root_logits):
     from llmbench.local.pcd_engine import _Search
 
     state = _Search()
-    engine._walk(tree, np.array(root_logits, dtype=np.float32), 0.0, state)
+    engine._walk(tree, np.array(root_logits, dtype=np.float32), state)
     return state
 
 
@@ -132,7 +162,7 @@ def test_scores_full_sequences_not_just_the_first_token():
     after_one[2] = -6.0
     after_one[3] = -6.0
 
-    engine = make_engine({(1,): after_one}, [[1, 2], [1, 3], [4]])
+    engine = make_engine({(1,): after_one})
     tree = build_token_tree([[1, 2], [1, 3], [4]])
     state = score_candidates(engine, tree, root)
 
@@ -144,19 +174,20 @@ def test_pruning_preserves_the_argmax():
     """Pruning uses an admissible bound, so it cannot change the winner."""
     root = [0.0] * VOCAB
     root[1] = 5.0   # strong branch, needs a continuation step
-    root[4] = -8.0  # hopeless branch, must be pruned
+    root[7] = 0.0   # a finished candidate, sets the bar
+    root[4] = -8.0  # hopeless branch that would need expanding: must be pruned
     after_one = [0.0] * VOCAB
     after_one[2] = 3.0
     after_one[3] = 0.0
 
-    tokenized = [[1, 2], [1, 3], [4]]
-    engine = make_engine({(1,): after_one}, tokenized)
+    tokenized = [[1, 2], [1, 3], [4, 5], [4, 6], [7]]
+    engine = make_engine({(1,): after_one})
     state = score_candidates(engine, build_token_tree(tokenized), root)
 
     assert state.best == 0
     assert state.pruned >= 1
-    # The pruned candidate still gets an upper bound for calibration.
-    assert 2 in state.bounds or 2 in state.scores
+    # The pruned candidates still get an upper bound, for calibration.
+    assert {2, 3} <= set(state.bounds) | set(state.scores)
 
 
 def test_pruned_branch_is_never_evaluated():
@@ -170,14 +201,14 @@ def test_pruned_branch_is_never_evaluated():
     after_four[5] = 50.0  # would win if it were ever reached
 
     tokenized = [[1, 2], [1, 3], [4, 5]]
-    engine = make_engine({(1,): after_one, (4,): after_four}, tokenized)
+    engine = make_engine({(1,): after_one, (4,): after_four})
     state = score_candidates(engine, build_token_tree(tokenized), root)
 
     assert state.best in (0, 1)
-    assert engine._llm.evals == 1, "only the surviving branch was expanded"
+    assert engine._ctx.batched_sizes == [1], "only the surviving branch was expanded"
 
 
-def test_walk_rewinds_the_cache_for_each_sibling():
+def test_sibling_branches_are_evaluated_in_one_batched_decode():
     root = [0.0] * VOCAB
     root[1] = 1.0
     root[4] = 0.9
@@ -188,12 +219,14 @@ def test_walk_rewinds_the_cache_for_each_sibling():
     cont[6] = 0.0
 
     tokenized = [[1, 2], [1, 3], [4, 5], [4, 6]]
-    engine = make_engine({(1,): cont, (4,): cont}, tokenized)
+    engine = make_engine({(1,): cont, (4,): cont})
     score_candidates(engine, build_token_tree(tokenized), root)
 
-    assert engine._llm.evals == 2
-    # Both branches were rewound back to the shared prefix position.
-    assert engine._llm.rewinds == [0, 0]
+    # This is the broadcast: two branches, one decode, not one decode each.
+    assert engine._ctx.decodes == 1
+    assert engine._ctx.batched_sizes == [2]
+    # Each branch got its own sequence copied from the shared prompt prefix.
+    assert sorted(engine._ctx.copies) == [(0, 6), (0, 7)]
 
 
 def test_every_candidate_gets_a_score_or_a_bound():
@@ -204,7 +237,7 @@ def test_every_candidate_gets_a_score_or_a_bound():
     cont = [0.0] * VOCAB
 
     tokenized = [[1, 2], [1, 3], [4], [7, 8]]
-    engine = make_engine({(1,): cont, (4,): cont, (7,): cont}, tokenized)
+    engine = make_engine({(1,): cont, (4,): cont, (7,): cont})
     state = score_candidates(engine, build_token_tree(tokenized), root)
 
     covered = set(state.scores) | set(state.bounds)

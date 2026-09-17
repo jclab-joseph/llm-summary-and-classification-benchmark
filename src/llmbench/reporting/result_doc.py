@@ -212,6 +212,20 @@ JUDGE_COLUMNS: list[Column] = [
     ("judge_cost_usd", "Judge cost", "money"),
 ]
 
+CLASSIFICATION_MODES_COLUMNS: list[Column] = [
+    ("model", "Model", "s"),
+    ("language", "Lang", "s"),
+    ("text_accuracy", "text Acc", "f4"),
+    ("json_schema_accuracy", "json_schema Acc", "f4"),
+    ("accuracy_delta", "Δ Acc", "f4"),
+    ("text_macro_f1", "text F1", "f4"),
+    ("json_schema_macro_f1", "json_schema F1", "f4"),
+    ("macro_f1_delta", "Δ F1", "f4"),
+    ("text_invalid_rate", "text Inv", "f4"),
+    ("json_schema_invalid_rate", "json_schema Inv", "f4"),
+    ("invalid_rate_delta", "Δ Inv", "f4"),
+]
+
 RUN_COLUMNS: list[Column] = [
     ("model", "Model", "s"),
     ("status", "Status", "s"),
@@ -340,6 +354,26 @@ JUDGE_LEGEND: list[Legend] = [
     ("Judge cost", "down", "judge 호출의 실제 청구액."),
 ]
 
+CLASSIFICATION_MODES_ABOUT = """같은 모델을 두 조건에서 돌린 결과입니다.
+
+- **text** — `<번호>: <인텐트 번호>` 형식을 모델이 직접 지켜야 합니다. 형식을 못 지키면 오답입니다.
+  즉 "분류 능력 + 형식 준수"를 함께 잽니다.
+- **json_schema** — OpenRouter structured output 으로 답을 60개 인텐트 집합에 **제약** 합니다.
+  형식 실패가 구조적으로 불가능하므로 "분류 능력"만 남습니다.
+
+따라서 **delta 가 클수록 그 모델의 text 점수는 분류 실력이 아니라 형식 준수 실패에 발목이
+잡혀 있었다**는 뜻입니다. 어느 조건이 옳은지는 용도에 달렸습니다. 서비스에 붙일 모델을 고른다면
+형식 준수도 능력이고, 순수 분류력을 비교한다면 json_schema 쪽이 맞습니다."""
+
+CLASSIFICATION_MODES_LEGEND: list[Legend] = [
+    ("text / json_schema Acc", "up", "각 조건의 정확도."),
+    ("Δ Acc", "up", "json_schema − text. 양수면 제약을 걸었을 때 올라간 것."),
+    ("text / json_schema F1", "up", "각 조건의 macro-F1."),
+    ("Δ F1", "up", "macro-F1 차이."),
+    ("text / json_schema Inv", "down", "각 조건의 invalid 비율."),
+    ("Δ Inv", "down", "invalid 비율 차이. 제약이 걸리면 보통 0 으로 떨어집니다."),
+]
+
 RUN_ABOUT = """결과를 재현하는 데 필요한 정보입니다. **manifest 해시가 모든 모델에서 같으면**
 완전히 동일한 케이스로 비교했다는 뜻입니다."""
 
@@ -362,8 +396,9 @@ def render_result_markdown(
     *,
     excel_path: Path | None = None,
     root: Path | None = None,
+    all_summaries: Sequence[dict[str, Any]] | None = None,
 ) -> str:
-    tables = build_tables(leaderboard, summaries)
+    tables = build_tables(leaderboard, summaries, all_summaries=all_summaries)
     generated = utc_now_iso()
 
     def rel(path: Path | None) -> str:
@@ -485,6 +520,15 @@ def render_result_markdown(
         ),
     ]
 
+    if tables["ClassificationModes"]:
+        lines += _section(
+            "분류: 자유 텍스트 vs 구조화 출력",
+            tables["ClassificationModes"],
+            CLASSIFICATION_MODES_COLUMNS,
+            about=CLASSIFICATION_MODES_ABOUT,
+            legend=CLASSIFICATION_MODES_LEGEND,
+        )
+
     if tables["Judge"]:
         lines += _section(
             "LLM-as-a-Judge (참고용)",
@@ -522,6 +566,7 @@ def write_result_markdown(
     *,
     path: Path | None = None,
     excel_path: Path | None = None,
+    all_summaries: Sequence[dict[str, Any]] | None = None,
 ) -> Path:
     target = path or cfg.result_markdown_path
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -530,6 +575,7 @@ def write_result_markdown(
         summaries,
         excel_path=excel_path or cfg.result_excel_path,
         root=cfg.root,
+        all_summaries=all_summaries,
     )
     target.write_text(document + "\n", encoding="utf-8")
     return target

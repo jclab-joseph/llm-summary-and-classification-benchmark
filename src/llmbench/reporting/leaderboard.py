@@ -10,13 +10,15 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 from llmbench.config.loader import AppConfig
 
 __all__ = [
     "LEADERBOARD_COLUMNS",
     "load_model_summaries",
+    "baseline_summaries",
+    "classification_mode_of",
     "build_leaderboard",
     "write_leaderboard",
     "model_detail_rows",
@@ -41,16 +43,38 @@ LEADERBOARD_COLUMNS = [
 
 
 def load_model_summaries(cfg: AppConfig) -> list[dict[str, Any]]:
+    """Every stored summary, including non-baseline run conditions."""
     root = cfg.results_dir / "models"
     if not root.is_dir():
         return []
     out = []
-    for path in sorted(root.glob("*/summary.json")):
+    for path in sorted(root.glob("*/summary*.json")):
         try:
             out.append(json.loads(path.read_text(encoding="utf-8")))
         except json.JSONDecodeError:
             continue
     return out
+
+
+def classification_mode_of(summary: dict[str, Any]) -> str:
+    return (summary.get("variant") or {}).get("classification_mode", "text")
+
+
+def baseline_summaries(summaries: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+    """One summary per model for the leaderboard: the baseline condition.
+
+    Showing both conditions as separate leaderboard rows would imply they are
+    different models. The mode comparison gets its own table instead.
+    """
+    chosen: dict[str, dict[str, Any]] = {}
+    for summary in summaries:
+        model_id = _get(summary, "model", "model_id", default="")
+        current = chosen.get(model_id)
+        if current is None or (
+            classification_mode_of(current) != "text" and classification_mode_of(summary) == "text"
+        ):
+            chosen[model_id] = summary
+    return list(chosen.values())
 
 
 def _get(data: dict[str, Any], *path: str, default: Any = None) -> Any:

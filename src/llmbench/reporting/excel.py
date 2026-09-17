@@ -15,6 +15,7 @@ from llmbench.config.loader import AppConfig
 from llmbench.core.reproducibility import utc_now_iso
 from llmbench.reporting.result_doc import (
     CLASSIFICATION_LEGEND,
+    CLASSIFICATION_MODES_LEGEND,
     COST_LEGEND,
     CROSS_LINGUAL_LEGEND,
     HALLUCINATION_LEGEND,
@@ -67,6 +68,7 @@ _SHEET_LEGENDS = (
     ("Summarization", SUMMARIZATION_LEGEND),
     ("Hallucination", HALLUCINATION_LEGEND),
     ("Classification", CLASSIFICATION_LEGEND),
+    ("ClassificationModes", CLASSIFICATION_MODES_LEGEND),
     ("CrossLingual", CROSS_LINGUAL_LEGEND),
     ("SurfaceFacts", SURFACE_FACT_LEGEND),
     ("Cost", COST_LEGEND),
@@ -128,6 +130,7 @@ def write_excel(
     summaries: Sequence[dict[str, Any]],
     *,
     path: Path | None = None,
+    all_summaries: Sequence[dict[str, Any]] | None = None,
 ) -> Path:
     """Write every result view to one workbook. Returns the path."""
     import pandas as pd
@@ -135,7 +138,7 @@ def write_excel(
 
     target = path or cfg.result_excel_path
     target.parent.mkdir(parents=True, exist_ok=True)
-    tables = build_tables(leaderboard, summaries)
+    tables = build_tables(leaderboard, summaries, all_summaries=all_summaries)
 
     with pd.ExcelWriter(target, engine="openpyxl") as writer:
         about = pd.DataFrame(_ABOUT, columns=["Field", "Value"])

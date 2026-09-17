@@ -145,6 +145,11 @@ class ModelParameters(StrictModel):
     stop: bool = True
     reasoning: bool = True
     response_format: bool = True
+    # Strict `json_schema` responses are a *separate* capability from plain
+    # `response_format`: an endpoint can accept `{"type": "json_object"}` while
+    # rejecting a schema. Conflating the two is how a model that advertises
+    # response_format still answers 404 to every structured request.
+    structured_outputs: bool = True
 
     def as_dict(self) -> dict[str, bool]:
         return self.model_dump()
@@ -161,7 +166,8 @@ OPENROUTER_PARAMETER_NAMES: dict[str, tuple[str, ...]] = {
     "seed": ("seed",),
     "stop": ("stop",),
     "reasoning": ("reasoning", "include_reasoning", "reasoning_effort"),
-    "response_format": ("response_format", "structured_outputs"),
+    "response_format": ("response_format",),
+    "structured_outputs": ("structured_outputs",),
 }
 
 
@@ -191,6 +197,10 @@ class ModelConfig(StrictModel):
 
     def supports(self, parameter: str) -> bool:
         return bool(getattr(self.parameters, parameter, True))
+
+    def supports_json_schema(self) -> bool:
+        """Whether a strict `response_format: json_schema` request can be served."""
+        return self.supports("response_format") and self.supports("structured_outputs")
 
     def output_token_budget(self, answer_tokens: int) -> int:
         """`max_tokens` to send for a request whose answer should fit in ``answer_tokens``.

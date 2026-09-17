@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from typing import Any, Sequence
 
@@ -10,6 +11,7 @@ from llmbench.metrics.base import Evaluator
 __all__ = [
     "CLASSIFICATION_EVALUATOR",
     "parse_batch_answer",
+    "parse_batch_json_answer",
     "classification_scores",
     "cross_lingual_consistency",
 ]
@@ -52,6 +54,50 @@ def parse_batch_answer(text: str, batch_size: int, label_count: int) -> dict[int
         # Fall back to a looser scan for models that inline the answers.
         for match in _LOOSE_RE.finditer(text):
             record(match.group(1), match.group(2))
+    return answers
+
+
+_JSON_BLOCK = re.compile(r"\{.*\}", re.DOTALL)
+
+
+def parse_batch_json_answer(
+    text: str,
+    batch_size: int,
+    label_space: Sequence[str],
+) -> dict[int, int | None]:
+    """Parse the structured-output reply: `{"answers": ["intent", ...]}`.
+
+    A length mismatch fails the **whole batch**. Position is the only link
+    between an answer and its utterance, so a short or long array means every
+    mapping after the first gap is a guess -- scoring those would invent data.
+    They are reported as invalid instead.
+    """
+    answers: dict[int, int | None] = {i: None for i in range(1, batch_size + 1)}
+    if not text:
+        return answers
+
+    candidate = text.strip()
+    if candidate.startswith("```"):
+        candidate = candidate.strip("`")
+        candidate = candidate.split("\n", 1)[-1] if "\n" in candidate else candidate
+    match = _JSON_BLOCK.search(candidate)
+    if not match:
+        return answers
+    try:
+        data = json.loads(match.group(0))
+    except json.JSONDecodeError:
+        return answers
+    if not isinstance(data, dict):
+        return answers
+
+    values = data.get("answers")
+    if not isinstance(values, list) or len(values) != batch_size:
+        return answers
+
+    index = {label: position for position, label in enumerate(label_space)}
+    for position, value in enumerate(values, start=1):
+        if isinstance(value, str) and value in index:
+            answers[position] = index[value]
     return answers
 
 

@@ -43,7 +43,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12.5px; }
 <body>
 <main>
 <h1>LLM Summarization / Hallucination / Classification Benchmark</h1>
-<p class="sub">Generated 2026-09-16T04:48:28+00:00 &middot; every model called through OpenRouter</p>
+<p class="sub">Generated 2026-09-17T00:38:52+00:00 &middot; every model called through OpenRouter</p>
 
 <div class="note">
 Costs shown are the authoritative <code>usage.cost</code> values returned by OpenRouter.
@@ -55,10 +55,10 @@ Pricing-table figures are estimates used for budgeting only. Surface fact suppor
 <div class="scroll"><table><thead><tr><th>Model</th><th>Input $/M</th><th>Output $/M</th><th>Summary EN</th><th>Summary KO</th><th>Halu EN F1</th><th>Halu KO F1</th><th>Classification EN</th><th>Classification KO</th><th>EN-KO Consistency</th><th>Input Tokens</th><th>Output Tokens</th><th>OpenRouter Cost</th><th>Judge Cost</th></tr></thead><tbody><tr><td>google/gemini-2.5-flash-lite</td><td>0.1000</td><td>0.4000</td><td>0.1401</td><td>0.2298</td><td>0.4604</td><td>0.5353</td><td>0.0080</td><td>0.0130</td><td>0.9790</td><td>844,524</td><td>24,718</td><td>0.094340</td><td>0.000000</td></tr></tbody></table></div>
 
 <h2>Model detail</h2>
-<section><h3>google/gemini-2.5-flash-lite</h3><p><span class="chip">status: COMPLETED</span><span class="chip">run: run-20260916T044826-3b4b236c</span><span class="chip">api: openrouter</span></p><h4>OpenRouter Pricing Snapshot</h4><div class="kv"><div>Input $/M</div><div>0.100000</div><div>Cached Input $/M</div><div>0.025000</div><div>Output $/M</div><div>0.400000</div><div>Pricing retrieved at</div><div>2026-09-16T04:48:25+00:00</div><div>Pricing source</div><div>openrouter</div></div><h4>Actual Usage</h4><div class="kv"><div>Prompt Tokens</div><div>844,524</div><div>Cached Tokens</div><div>0</div><div>Cache Write Tokens</div><div>0</div><div>Completion Tokens</div><div>24,718</div><div>Reasoning Tokens</div><div>0</div><div>Total Tokens</div><div>869,242</div></div><h4>Actual Cost (OpenRouter usage.cost)</h4><div class="kv"><div>Summarization cost</div><div>0.031904</div><div>Hallucination cost</div><div>0.056225</div><div>Classification cost</div><div>0.006210</div><div>Retry/error cost</div><div>0</div><div>Judge cost</div><div>0.000000</div><div>Total OpenRouter cost</div><div>0.094340</div><div>Fresh cost this run</div><div>0.000000</div><div>Stored benchmark cost</div><div>0.094340</div><div>Estimated cost without cache</div><div>0.094340</div><div>Estimated cache savings</div><div>0.094340</div></div><h4>Summarization</h4><div class="scroll"><table><thead><tr><th>Metric</th><th>EN</th><th>KO</th></tr></thead><tbody><tr><td>ROUGE-Lsum</td><td>0.1401</td><td>0.2298</td></tr><tr><td>BERTScore F1</td><td>—</td><td>—</td></tr><tr><td>chrF++</td><td>22.5012</td><td>12.4257</td></tr><tr><td>Surface Fact Support (diagnostic)</td><td>1.0000</td><td>1.0000</td></tr><tr><td>Compression ratio</td><td>0.1316</td><td>0.1147</td></tr><tr><td>Output tokens (mean)</td><td>51.7000</td><td>71.7800</td></tr><tr><td>Empty output rate</td><td>0.0000</td><td>0.0000</td></tr><tr><td>Refusal rate</td><td>0.0000</td><td>0.0000</td></tr></tbody></table></div><h4>Hallucination</h4><div class="scroll"><table><thead><tr><th>Metric</th><th>EN</th><th>KO</th></tr></thead><tbody><tr><td>Accuracy</td><td>0.4725</td><td>0.5225</td></tr><tr><td>Macro-F1</td><td>0.4722</td><td>0.5221</td></tr><tr><td>Hallucination Precision</td><td>0.4712</td><td>0.5213</td></tr><tr><td>Hallucination Recall</td><td>0.4500</td><td>0.5500</td></tr><tr><td>Hallucination F1</td><td>0.4604</td><td>0.5353</td></tr><tr><td>Supported Recall</td><td>0.4950</td><td>0.4950</td></tr><tr><td>Invalid output rate</td><td>0.0000</td><td>0.0000</td></tr><tr><td>Status</td><td>OK</td><td>OK</td></tr></tbody></table></div><h4>Classification</h4><div class="scroll"><table><thead><tr><th>Metric</th><th>EN</th><th>KO</th></tr></thead><tbody><tr><td>Accuracy</td><td>0.0080</td><td>0.0130</td></tr><tr><td>Macro-F1</td><td>0.0081</td><td>0.0121</td></tr><tr><td>Invalid output rate</td><td>0.0000</td><td>0.0000</td></tr></tbody></table></div><h4>Cross-lingual (EN/KO paired)</h4><div class="kv"><div>Paired cases</div><div>1,000</div><div>Consistency</div><div>0.9790</div><div>Prediction agreement</div><div>0.0210</div><div>Both correct</div><div>0.0000</div><div>EN only correct</div><div>0.0080</div><div>KO only correct</div><div>0.0130</div><div>Both wrong</div><div>0.9790</div></div><details><summary>Reproducibility</summary><pre>{
+<section><h3>google/gemini-2.5-flash-lite</h3><p><span class="chip">status: COMPLETED</span><span class="chip">run: run-20260917T003850-a08557e6</span><span class="chip">api: openrouter</span></p><h4>OpenRouter Pricing Snapshot</h4><div class="kv"><div>Input $/M</div><div>0.100000</div><div>Cached Input $/M</div><div>0.025000</div><div>Output $/M</div><div>0.400000</div><div>Pricing retrieved at</div><div>2026-09-17T00:38:49+00:00</div><div>Pricing source</div><div>openrouter</div></div><h4>Actual Usage</h4><div class="kv"><div>Prompt Tokens</div><div>844,524</div><div>Cached Tokens</div><div>0</div><div>Cache Write Tokens</div><div>0</div><div>Completion Tokens</div><div>24,718</div><div>Reasoning Tokens</div><div>0</div><div>Total Tokens</div><div>869,242</div></div><h4>Actual Cost (OpenRouter usage.cost)</h4><div class="kv"><div>Summarization cost</div><div>0.031904</div><div>Hallucination cost</div><div>0.056225</div><div>Classification cost</div><div>0.006210</div><div>Retry/error cost</div><div>0</div><div>Judge cost</div><div>0.000000</div><div>Total OpenRouter cost</div><div>0.094340</div><div>Fresh cost this run</div><div>0.000000</div><div>Stored benchmark cost</div><div>0.094340</div><div>Estimated cost without cache</div><div>0.094340</div><div>Estimated cache savings</div><div>0.094340</div></div><h4>Summarization</h4><div class="scroll"><table><thead><tr><th>Metric</th><th>EN</th><th>KO</th></tr></thead><tbody><tr><td>ROUGE-Lsum</td><td>0.1401</td><td>0.2298</td></tr><tr><td>BERTScore F1</td><td>—</td><td>—</td></tr><tr><td>chrF++</td><td>22.5012</td><td>12.4257</td></tr><tr><td>Surface Fact Support (diagnostic)</td><td>1.0000</td><td>1.0000</td></tr><tr><td>Compression ratio</td><td>0.1316</td><td>0.1147</td></tr><tr><td>Output tokens (mean)</td><td>51.7000</td><td>71.7800</td></tr><tr><td>Empty output rate</td><td>0.0000</td><td>0.0000</td></tr><tr><td>Refusal rate</td><td>0.0000</td><td>0.0000</td></tr></tbody></table></div><h4>Hallucination</h4><div class="scroll"><table><thead><tr><th>Metric</th><th>EN</th><th>KO</th></tr></thead><tbody><tr><td>Accuracy</td><td>0.4725</td><td>0.5225</td></tr><tr><td>Macro-F1</td><td>0.4722</td><td>0.5221</td></tr><tr><td>Hallucination Precision</td><td>0.4712</td><td>0.5213</td></tr><tr><td>Hallucination Recall</td><td>0.4500</td><td>0.5500</td></tr><tr><td>Hallucination F1</td><td>0.4604</td><td>0.5353</td></tr><tr><td>Supported Recall</td><td>0.4950</td><td>0.4950</td></tr><tr><td>Invalid output rate</td><td>0.0000</td><td>0.0000</td></tr><tr><td>Status</td><td>OK</td><td>OK</td></tr></tbody></table></div><h4>Classification</h4><div class="scroll"><table><thead><tr><th>Metric</th><th>EN</th><th>KO</th></tr></thead><tbody><tr><td>Accuracy</td><td>0.0080</td><td>0.0130</td></tr><tr><td>Macro-F1</td><td>0.0081</td><td>0.0121</td></tr><tr><td>Invalid output rate</td><td>0.0000</td><td>0.0000</td></tr></tbody></table></div><h4>Cross-lingual (EN/KO paired)</h4><div class="kv"><div>Paired cases</div><div>1,000</div><div>Consistency</div><div>0.9790</div><div>Prediction agreement</div><div>0.0210</div><div>Both correct</div><div>0.0000</div><div>EN only correct</div><div>0.0080</div><div>KO only correct</div><div>0.0130</div><div>Both wrong</div><div>0.9790</div></div><details><summary>Reproducibility</summary><pre>{
   &quot;benchmark_package_version&quot;: &quot;1.0.0&quot;,
   &quot;benchmark_version&quot;: &quot;1.0.0&quot;,
-  &quot;git_commit&quot;: &quot;8d709c8d679a9226e30d04c8bb8a4757529688a6&quot;,
+  &quot;git_commit&quot;: &quot;259eab707098181699d06f21498431115d9b9625&quot;,
   &quot;git_dirty&quot;: true,
   &quot;python_version&quot;: &quot;3.12.3&quot;,
   &quot;python_implementation&quot;: &quot;CPython&quot;,
@@ -80,8 +80,8 @@ Pricing-table figures are estimates used for budgeting only. Surface fact suppor
     &quot;tenacity&quot;: &quot;not-installed&quot;,
     &quot;pyarrow&quot;: &quot;25.0.1&quot;
   },
-  &quot;captured_at&quot;: &quot;2026-09-16T04:48:26+00:00&quot;,
-  &quot;executed_at&quot;: &quot;2026-09-16T04:48:26+00:00&quot;,
+  &quot;captured_at&quot;: &quot;2026-09-17T00:38:50+00:00&quot;,
+  &quot;executed_at&quot;: &quot;2026-09-17T00:38:50+00:00&quot;,
   &quot;api_provider&quot;: &quot;openrouter&quot;,
   &quot;model_id&quot;: &quot;google/gemini-2.5-flash-lite&quot;,
   &quot;requested_model&quot;: &quot;google/gemini-2.5-flash-lite&quot;,
@@ -119,10 +119,16 @@ Pricing-table figures are estimates used for budgeting only. Surface fact suppor
     &quot;hallucination_max_source_tokens&quot;: 1600,
     &quot;word_boundary&quot;: true
   },
+  &quot;structured_output&quot;: {
+    &quot;version&quot;: &quot;so-1&quot;,
+    &quot;classification_mode&quot;: &quot;text&quot;,
+    &quot;judge_mode&quot;: &quot;json_schema&quot;
+  },
   &quot;prompt_versions&quot;: {
     &quot;summarization&quot;: &quot;sum-1&quot;,
     &quot;hallucination&quot;: &quot;halu-1&quot;,
     &quot;classification&quot;: &quot;cls-1&quot;,
+    &quot;classification_json_schema&quot;: &quot;cls-json-1&quot;,
     &quot;judge&quot;: &quot;judge-1&quot;
   },
   &quot;metric_versions&quot;: {
@@ -188,7 +194,7 @@ Pricing-table figures are estimates used for budgeting only. Surface fact suppor
     &quot;input_per_million&quot;: 0.1,
     &quot;output_per_million&quot;: 0.4,
     &quot;cached_input_per_million&quot;: 0.025,
-    &quot;retrieved_at&quot;: &quot;2026-09-16T04:48:25+00:00&quot;,
+    &quot;retrieved_at&quot;: &quot;2026-09-17T00:38:49+00:00&quot;,
     &quot;source&quot;: &quot;openrouter&quot;
   }
 }</pre></details></section>

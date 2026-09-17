@@ -16,6 +16,7 @@ __all__ = [
     "hallucination_rows",
     "classification_rows",
     "cross_lingual_rows",
+    "classification_mode_rows",
     "surface_fact_rows",
     "cost_rows",
     "usage_rows",
@@ -320,6 +321,60 @@ def run_rows(summaries: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
+def classification_mode_rows(summaries: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Free-text vs structured output, per model and language.
+
+    The text mode measures "can it classify AND follow the batch format"; the
+    structured mode constrains the answer to the label space, so it isolates the
+    classification itself. The delta is how much of a model's score was format
+    compliance.
+    """
+    from llmbench.reporting.leaderboard import classification_mode_of
+
+    by_model: dict[str, dict[str, dict[str, Any]]] = {}
+    for summary in summaries:
+        block = _get(summary, "metrics", "classification")
+        if not block:
+            continue
+        mode = classification_mode_of(summary)
+        model_id = _model_id(summary)
+        for language in LANGUAGES:
+            stats = _get(block, "per_language", language)
+            if not stats:
+                continue
+            by_model.setdefault(f"{model_id}\u0000{language}", {})[mode] = stats
+
+    rows: list[dict[str, Any]] = []
+    for key, modes in sorted(by_model.items()):
+        if len(modes) < 2:
+            continue
+        model_id, language = key.split("\u0000")
+        text = modes.get("text") or {}
+        structured = modes.get("json_schema") or {}
+
+        def delta(field: str) -> float | None:
+            a, b = structured.get(field), text.get(field)
+            return None if a is None or b is None else a - b
+
+        rows.append(
+            {
+                "model": model_id,
+                "language": language,
+                "text_accuracy": text.get("accuracy"),
+                "json_schema_accuracy": structured.get("accuracy"),
+                "accuracy_delta": delta("accuracy"),
+                "text_macro_f1": text.get("macro_f1"),
+                "json_schema_macro_f1": structured.get("macro_f1"),
+                "macro_f1_delta": delta("macro_f1"),
+                "text_invalid_rate": text.get("invalid_output_rate"),
+                "json_schema_invalid_rate": structured.get("invalid_output_rate"),
+                "invalid_rate_delta": delta("invalid_output_rate"),
+            }
+        )
+    rows.sort(key=lambda r: -(r["accuracy_delta"] or 0.0))
+    return rows
+
+
 # Sheet name -> (builder, title). Order is the order of the workbook sheets and
 # of the RESULT.md sections.
 TABLES: dict[str, str] = {
@@ -328,6 +383,7 @@ TABLES: dict[str, str] = {
     "Hallucination": "Hallucination detection",
     "Classification": "Classification (MASSIVE)",
     "CrossLingual": "EN/KO cross-lingual consistency",
+    "ClassificationModes": "Free-text vs structured output",
     "SurfaceFacts": "Surface fact support (diagnostic)",
     "Cost": "Cost (OpenRouter usage.cost)",
     "Usage": "Token usage and cache",
@@ -339,14 +395,22 @@ TABLES: dict[str, str] = {
 def build_tables(
     leaderboard: Sequence[dict[str, Any]],
     summaries: Sequence[dict[str, Any]],
+    *,
+    all_summaries: Sequence[dict[str, Any]] | None = None,
 ) -> dict[str, list[dict[str, Any]]]:
-    """All tabular views, keyed by sheet/section name."""
+    """All tabular views, keyed by sheet/section name.
+
+    ``summaries`` is one per model (the baseline condition); ``all_summaries``
+    additionally carries the other run conditions, which only the mode
+    comparison needs.
+    """
     return {
         "Leaderboard": leaderboard_rows(leaderboard),
         "Summarization": summarization_rows(summaries),
         "Hallucination": hallucination_rows(summaries),
         "Classification": classification_rows(summaries),
         "CrossLingual": cross_lingual_rows(summaries),
+        "ClassificationModes": classification_mode_rows(all_summaries or summaries),
         "SurfaceFacts": surface_fact_rows(summaries),
         "Cost": cost_rows(summaries),
         "Usage": usage_rows(summaries),

@@ -240,7 +240,7 @@ class JudgeRunner:
                         ),
                         provider=judge_model.routing.to_request_payload(),
                         response_format=(
-                            response_format if judge_model.supports("response_format") else None
+                            response_format if judge_model.supports_json_schema() else None
                         ),
                     )
                 )

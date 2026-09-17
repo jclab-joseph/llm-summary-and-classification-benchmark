@@ -1,0 +1,374 @@
+{
+  "schema_version": 2,
+  "generated_at": "2026-09-17T00:26:56+00:00",
+  "run_id": "run-20260917T002639-a364d869",
+  "variant": {
+    "classification_mode": "json_schema"
+  },
+  "status": "COMPLETED",
+  "api_provider": "openrouter",
+  "model": {
+    "model_id": "google/gemini-3.1-flash-lite",
+    "display_name": "Gemini 3.1 Flash-Lite",
+    "vendor": "google",
+    "safe_slug": "google__gemini-3.1-flash-lite",
+    "max_output_tokens": 1024,
+    "reasoning": {
+      "enabled": false,
+      "effort": null,
+      "max_tokens": null,
+      "exclude": true
+    },
+    "routing": {
+      "mode": "default",
+      "provider_order": null,
+      "allow_fallbacks": true,
+      "only": null,
+      "ignore": null,
+      "require_parameters": true,
+      "data_collection": "allow",
+      "sort": null,
+      "quantizations": null
+    },
+    "routing_config_hash": "cbe6fb9c14d4b2b12e690d6565e05bcf861c5db26cc56aef45e3e3810f67b298",
+    "uses_alias": false
+  },
+  "scope": {
+    "benchmarks": [
+      "classification"
+    ],
+    "languages": [
+      "en",
+      "ko"
+    ],
+    "total_tasks": 100,
+    "total_cases": 2000,
+    "skipped": {}
+  },
+  "cache": {
+    "cache_hits": 0,
+    "cache_misses": 100,
+    "openrouter_api_calls": 100,
+    "openrouter_http_attempts": 100,
+    "metric_cache": {
+      "hits": 0,
+      "misses": 100
+    }
+  },
+  "usage": {
+    "prompt_tokens": 1209106,
+    "cached_tokens": 0,
+    "cache_write_tokens": 0,
+    "completion_tokens": 68478,
+    "reasoning_tokens": 0,
+    "total_tokens": 1277584,
+    "successful_cases": 1400
+  },
+  "cost": {
+    "pricing_snapshot": {
+      "model_id": "google/gemini-3.1-flash-lite",
+      "input_per_million": 0.25,
+      "output_per_million": 1.5,
+      "cached_input_per_million": 0.025,
+      "retrieved_at": "2026-09-17T00:26:38+00:00",
+      "source": "openrouter"
+    },
+    "authoritative_source": "openrouter usage.cost",
+    "by_benchmark": {
+      "classification": 0.0857975,
+      "hallucination": 0.17294275,
+      "summarization": 0.14625325
+    },
+    "summarization_cost": 0.14625325,
+    "hallucination_cost": 0.17294275,
+    "classification_cost": 0.0857975,
+    "retry_error_cost": 0.0,
+    "judge_cost": 0.0,
+    "total_openrouter_cost": 0.4049935,
+    "fresh_cost_this_run": 0.04699200000000001,
+    "stored_benchmark_cost": 0.4049935,
+    "estimated_cost_without_cache": 0.04699200000000001,
+    "estimated_cache_savings": 0.0,
+    "attempts": {
+      "by_status": {
+        "OPENROUTER_ERROR": {
+          "count": 17,
+          "usage_cost": 0.0
+        },
+        "SUCCESS": {
+          "count": 1400,
+          "usage_cost": 0.4049935
+        }
+      },
+      "success_attempts": 1400,
+      "success_cost": 0.4049935,
+      "error_attempts": 17,
+      "error_cost": 0.0,
+      "total_attempts": 1417,
+      "total_cost": 0.4049935
+    },
+    "reconciliation": {
+      "recomputed_from_pricing_table": 0.4049935,
+      "actual_usage_cost": 0.4049935,
+      "difference": 0.0,
+      "relative_difference": 0.0,
+      "matches_within_tolerance": true,
+      "authoritative": "openrouter usage.cost"
+    }
+  },
+  "failures": {},
+  "failure_guard": {
+    "enabled": true,
+    "tripped": false,
+    "reason": null,
+    "attempts": 100,
+    "failures": 0,
+    "failure_rate": 0.0,
+    "consecutive_failures": 0,
+    "status_counts": {},
+    "top_errors": [],
+    "first_failure": null
+  },
+  "preflight": {
+    "checked": true,
+    "supported_parameters": [
+      "include_reasoning",
+      "max_tokens",
+      "reasoning",
+      "reasoning_effort",
+      "response_format",
+      "seed",
+      "stop",
+      "structured_outputs",
+      "temperature",
+      "tool_choice",
+      "tools",
+      "top_p"
+    ],
+    "sending": [
+      "reasoning",
+      "response_format",
+      "temperature",
+      "top_p"
+    ],
+    "blocking": [],
+    "informational": [],
+    "require_parameters": true
+  },
+  "skipped": {
+    "by_failure_guard": 0,
+    "by_budget": 0
+  },
+  "log_path": "/home/joseph/jcworkspace/llm-summary-and-classification-benchmark/data/logs/benchmark-20260917T002612.log",
+  "notes": [],
+  "metrics": {
+    "classification": {
+      "benchmark": "classification",
+      "version": "1.0.0",
+      "manifest_hash": "1bebd7a4e6cab622b3a85e6f856e019c9459100085c08ca38ccec107d5e3ec21",
+      "dataset_revision": "940fd47a81eaa7f2cc7b129674d945d618ac38c2",
+      "label_space_size": 60,
+      "batch_size": 20,
+      "per_language": {
+        "en": {
+          "cases": 1000,
+          "accuracy": 0.892,
+          "macro_f1": 0.881856607908956,
+          "correct": 892,
+          "invalid_outputs": 0,
+          "invalid_output_rate": 0.0,
+          "failed_cases": 0,
+          "label_space_size": 60
+        },
+        "ko": {
+          "cases": 1000,
+          "accuracy": 0.88,
+          "macro_f1": 0.8567124886282362,
+          "correct": 880,
+          "invalid_outputs": 0,
+          "invalid_output_rate": 0.0,
+          "failed_cases": 0,
+          "label_space_size": 60
+        }
+      },
+      "overall": {
+        "cases": 2000,
+        "accuracy": 0.886,
+        "macro_f1": 0.869580761444658,
+        "correct": 1772,
+        "invalid_outputs": 0,
+        "invalid_output_rate": 0.0,
+        "failed_cases": 0,
+        "label_space_size": 60
+      },
+      "cross_lingual": {
+        "paired_cases": 1000,
+        "prediction_agreement": 0.915,
+        "consistency": 0.938,
+        "both_correct": 855,
+        "both_correct_rate": 0.855,
+        "en_only_correct": 37,
+        "en_only_correct_rate": 0.037,
+        "ko_only_correct": 25,
+        "ko_only_correct_rate": 0.025,
+        "both_wrong": 83,
+        "both_wrong_rate": 0.083
+      },
+      "output_mode": "json_schema",
+      "evaluators": {
+        "classification_metrics": {
+          "version": "clsmetrics-1.0",
+          "config": {
+            "averaging": "macro",
+            "invalid_counts_as_wrong": true,
+            "output_mode": "json_schema"
+          }
+        }
+      }
+    }
+  },
+  "judge": {},
+  "reproducibility": {
+    "benchmark_package_version": "1.0.0",
+    "benchmark_version": "1.0.0",
+    "git_commit": "259eab707098181699d06f21498431115d9b9625",
+    "git_dirty": true,
+    "python_version": "3.12.3",
+    "python_implementation": "CPython",
+    "platform": "Linux-6.8.0-47-generic-x86_64-with-glibc2.39",
+    "packages": {
+      "httpx": "0.28.1",
+      "pydantic": "2.13.5",
+      "sqlalchemy": "2.0.54",
+      "pandas": "3.0.5",
+      "numpy": "2.5.3",
+      "scikit-learn": "1.9.1",
+      "sacrebleu": "2.6.0",
+      "rouge-score": "0.1.2",
+      "bert-score": "not-installed",
+      "torch": "not-installed",
+      "transformers": "not-installed",
+      "typer": "0.27.2",
+      "rich": "15.0.0",
+      "tenacity": "not-installed",
+      "pyarrow": "25.0.1"
+    },
+    "captured_at": "2026-09-17T00:26:39+00:00",
+    "executed_at": "2026-09-17T00:26:39+00:00",
+    "api_provider": "openrouter",
+    "model_id": "google/gemini-3.1-flash-lite",
+    "requested_model": "google/gemini-3.1-flash-lite",
+    "alias_resolution": null,
+    "uses_alias": false,
+    "routing_config": {
+      "mode": "default",
+      "provider_order": null,
+      "allow_fallbacks": true,
+      "only": null,
+      "ignore": null,
+      "require_parameters": true,
+      "data_collection": "allow",
+      "sort": null,
+      "quantizations": null
+    },
+    "routing_config_hash": "cbe6fb9c14d4b2b12e690d6565e05bcf861c5db26cc56aef45e3e3810f67b298",
+    "reasoning_config": {
+      "enabled": false,
+      "effort": null,
+      "max_tokens": null,
+      "exclude": true
+    },
+    "generation": {
+      "version": "gen-1",
+      "temperature": 0.0,
+      "top_p": 1.0,
+      "seed": null,
+      "tools_enabled": false,
+      "web_search_enabled": false
+    },
+    "truncation_policy": {
+      "version": "trunc-1",
+      "summarization_max_source_tokens": 1800,
+      "hallucination_max_source_tokens": 1600,
+      "word_boundary": true
+    },
+    "structured_output": {
+      "version": "so-1",
+      "classification_mode": "json_schema",
+      "judge_mode": "json_schema"
+    },
+    "prompt_versions": {
+      "summarization": "sum-1",
+      "hallucination": "halu-1",
+      "classification": "cls-1",
+      "classification_json_schema": "cls-json-1",
+      "judge": "judge-1"
+    },
+    "metric_versions": {
+      "rouge": "rouge-1.1",
+      "chrf": "chrf-1.0",
+      "bertscore": "bertscore-1.0",
+      "surface_facts": "surface-facts-1.1",
+      "classification_metrics": "clsmetrics-1.0",
+      "hallucination_metrics": "halumetrics-1.0"
+    },
+    "manifests": {
+      "summarization": {
+        "path": "xlsum_v1.jsonl",
+        "hash": "0135c4f4499e35dcde7855ad6afe33e333ebf2bca519a20b81257dc39150cd62",
+        "dataset_revision": "30fece425f9a3866e04321773ca7a80056d55ca6",
+        "counts": {
+          "en": 200,
+          "ko": 200,
+          "total": 400
+        }
+      },
+      "hallucination:en": {
+        "path": "halueval_summary_v1.jsonl",
+        "hash": "21debf696ed02ef001638142e2864a1bb58be409f88d8c86ad36e067ee609ca5",
+        "dataset_revision": "12a856119f03975a94509091e8cada3e6be6ead7",
+        "counts": {
+          "en": 400,
+          "total": 400
+        }
+      },
+      "hallucination:ko": {
+        "path": "aihub_summary_factuality_v1.jsonl",
+        "hash": "b49d914db700703584e2388f602808314a59c9e088a20f02e670ead58141fa96",
+        "dataset_revision": "local:Validation",
+        "counts": {
+          "ko": 400,
+          "total": 400
+        }
+      },
+      "classification": {
+        "path": "massive_v1.jsonl",
+        "hash": "1bebd7a4e6cab622b3a85e6f856e019c9459100085c08ca38ccec107d5e3ec21",
+        "dataset_revision": "940fd47a81eaa7f2cc7b129674d945d618ac38c2",
+        "counts": {
+          "en": 1000,
+          "ko": 1000,
+          "total": 2000
+        }
+      },
+      "judge": {
+        "path": "judge_xlsum_v1.jsonl",
+        "hash": "220531204ce53fe08cf0d0d7e8b0dd5084dec22ca0939287be1d4313cf690c51",
+        "dataset_revision": "30fece425f9a3866e04321773ca7a80056d55ca6",
+        "counts": {
+          "en": 100,
+          "ko": 100,
+          "total": 200
+        }
+      }
+    },
+    "pricing_snapshot": {
+      "model_id": "google/gemini-3.1-flash-lite",
+      "input_per_million": 0.25,
+      "output_per_million": 1.5,
+      "cached_input_per_million": 0.025,
+      "retrieved_at": "2026-09-17T00:26:38+00:00",
+      "source": "openrouter"
+    }
+  }
+}

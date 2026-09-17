@@ -10,11 +10,38 @@ from llmbench.config.loader import AppConfig
 from llmbench.core.reproducibility import utc_now_iso
 from llmbench.runner import RunOutcome
 
-__all__ = ["build_model_summary", "write_model_summary", "model_result_dir"]
+__all__ = [
+    "build_model_summary",
+    "write_model_summary",
+    "model_result_dir",
+    "run_variant",
+    "summary_filename",
+    "BASELINE_CLASSIFICATION_MODE",
+]
+
+
+BASELINE_CLASSIFICATION_MODE = "text"
 
 
 def model_result_dir(cfg: AppConfig, model_id: str) -> Path:
     return cfg.results_dir / "models" / model_id.replace("/", "__")
+
+
+def run_variant(cfg: AppConfig) -> dict[str, str]:
+    """The condition a run was executed under, beyond the model itself."""
+    return {"classification_mode": cfg.benchmark.structured_output.classification_mode}
+
+
+def summary_filename(variant: dict[str, str]) -> str:
+    """Baseline keeps `summary.json`; other conditions get their own file.
+
+    Without this a structured-output run would overwrite the text-mode numbers
+    and the comparison the run exists to make would be gone.
+    """
+    mode = variant.get("classification_mode", BASELINE_CLASSIFICATION_MODE)
+    if mode == BASELINE_CLASSIFICATION_MODE:
+        return "summary.json"
+    return f"summary.classification-{mode}.json"
 
 
 def build_model_summary(cfg: AppConfig, outcome: RunOutcome) -> dict[str, Any]:
@@ -28,9 +55,10 @@ def build_model_summary(cfg: AppConfig, outcome: RunOutcome) -> dict[str, Any]:
     usage = outcome.usage or {}
 
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "generated_at": utc_now_iso(),
         "run_id": outcome.run_id,
+        "variant": run_variant(cfg),
         "status": outcome.status,
         "api_provider": "openrouter",
         "model": {
@@ -86,7 +114,7 @@ def build_model_summary(cfg: AppConfig, outcome: RunOutcome) -> dict[str, Any]:
 def write_model_summary(cfg: AppConfig, outcome: RunOutcome) -> Path:
     directory = model_result_dir(cfg, outcome.plan.model.model_id)
     directory.mkdir(parents=True, exist_ok=True)
-    path = directory / "summary.json"
     payload = build_model_summary(cfg, outcome)
+    path = directory / summary_filename(payload["variant"])
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return path

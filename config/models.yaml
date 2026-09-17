@@ -28,6 +28,9 @@ defaults:
     stop: true
     reasoning: true
     response_format: true
+    # Strict `json_schema` responses are a separate capability: an endpoint can
+    # accept response_format while rejecting a schema.
+    structured_outputs: true
   routing:
     mode: default              # default | pinned | restricted
     provider_order: null       # e.g. ["deepinfra", "together"]
@@ -208,7 +211,8 @@ models:
     reasoning:
       enabled: false
     parameters:
-      stop: false   # OpenRouter reports no stop-sequence support
+      stop: false                # OpenRouter reports no stop-sequence support
+      structured_outputs: false  # accepts response_format, but not a strict json_schema
     routing:
       mode: default
       provider_order: null

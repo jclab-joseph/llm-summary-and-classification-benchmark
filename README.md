@@ -108,6 +108,28 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 | Macro-F1 | ↑ | 60개 인텐트별 F1의 평균. 드문 인텐트를 무시하는 모델에 불리하게 작동합니다. |
 | Invalid output rate | ↓ | 배치 형식을 못 지켜 답을 읽지 못한 비율. 오답으로 계산됩니다. |
 
+#### 답변 형식: 자유 텍스트 vs 구조화 출력
+
+같은 과제를 두 조건에서 잴 수 있습니다.
+
+```bash
+benchmark run --model <slug> --benchmark classification --classification-mode text
+benchmark run --model <slug> --benchmark classification --classification-mode json_schema
+```
+
+- `text`(기본) — 모델이 `<번호>: <인텐트 번호>` 형식을 직접 지켜야 합니다.
+  **분류 능력 + 형식 준수**를 함께 잽니다.
+- `json_schema` — OpenRouter structured output 으로 답을 60개 인텐트 집합에 제약합니다.
+  형식 실패가 구조적으로 불가능하므로 **분류 능력만** 남습니다.
+
+두 조건은 cache key 가 다르고 결과 파일도 다릅니다(`summary.json` /
+`summary.classification-json_schema.json`). 서로 덮어쓰지 않으므로 RESULT.md 의
+「분류: 자유 텍스트 vs 구조화 출력」 절에 차이가 표로 나옵니다. 차이가 클수록 그 모델의
+text 점수가 분류 실력이 아니라 형식 준수 실패에 발목 잡혀 있었다는 뜻입니다.
+
+어느 쪽이 옳은지는 용도에 달렸습니다. 서비스에 붙일 모델을 고른다면 형식 준수도 능력이고,
+순수 분류력을 비교한다면 `json_schema` 쪽이 맞습니다.
+
 EN/KO 쌍은 **같은 semantic id** 를 공유합니다. 뜻이 같은 발화를 두 언어로 물어본 것이라,
 두 언어 사이의 편차를 직접 볼 수 있습니다.
 
@@ -286,6 +308,10 @@ HTTP 404 `No endpoints found that can handle the requested parameters` 가 돌�
 빠진 파라미터는 cache key에서도 빠집니다. cache key는 "실제로 무엇을 요청했는가" 를 기술해야
 하기 때문입니다.
 
+`structured_outputs` 는 `response_format` 과 **별개 능력**입니다. endpoint 가
+`{"type": "json_object"}` 는 받으면서 strict schema 는 거부할 수 있어서, 둘을 같은 것으로
+취급하면 structured output 을 지원한다고 표시된 모델이 모든 요청에 404 를 돌려줍니다.
+
 일부 제약은 메타데이터에 드러나지 않습니다. 예를 들어 thinking 을 끌 수 없는 모델은
 `supported_parameters` 만으로는 구분되지 않고, 실행해 봐야 400 이 돌아옵니다. 이런 런타임
 제약은 사전 검사가 아니라 circuit breaker 가 잡습니다.
@@ -454,6 +480,7 @@ benchmark run --model mistralai/ministral-8b-2512 --language ko
 | `--force` | 성공 캐시를 무시하고 전부 다시 실행 |
 | `--no-metric-cache` | 캐시된 추론으로 지표만 다시 계산 |
 | `--judge cheap\|strong` | 선택적 judge 단계 추가 |
+| `--classification-mode` | `text`(기본) 또는 `json_schema` |
 | `--skip-preflight` | 모델이 거부하는 파라미터가 있어도 강행 |
 | `-v` / `-vv` | 콘솔 로그를 INFO / DEBUG 로 |
 | `--log-file PATH` | 로그 파일 위치 변경 |
@@ -699,7 +726,9 @@ results/
   leaderboard.json
   leaderboard.md
   report.html
-  models/{safe_model_slug}/summary.json     예: google__gemini-3.1-flash-lite/
+  models/{safe_model_slug}/
+    summary.json                            기본 조건
+    summary.classification-json_schema.json 구조화 출력 조건 (있을 때만)
 ```
 
 `benchmark run` 도 끝날 때 같은 산출물을 자동으로 갱신합니다(`--no-report` 로 끌 수 있음).
@@ -837,6 +866,25 @@ benchmark models --check
 - **출력 길이 상한도 달라집니다.** 비추론 모델은 요약에서 200 토큰에서 잘리지만, 여유분을
   받은 모델은 상한이 훨씬 높습니다. 프롬프트가 1~3문장을 지시하므로 실제 길이는 비슷하지만,
   길이 상한이 동일하지 않다는 점은 감안하세요.
+
+### `The specified schema produces a constraint that has too many states for serving`
+
+Gemini 계열이 structured output 요청에 400 으로 응답할 때 나옵니다. 제공자가 스키마를
+제약 디코딩 상태 기계로 컴파일하는데, **enum 값이 많은 배열에 길이 제약을 함께 걸면** 한계를
+넘습니다(60개 인텐트 × `minItems/maxItems: 20`).
+
+그래서 분류 스키마는 배열 길이를 제약하지 않습니다. 길이는 프롬프트가 지시하고
+파서가 검사하며, 개수가 맞지 않으면 그 배치 전체를 invalid 로 처리합니다. 정렬 보장은
+디코딩 시점이 아니라 채점 시점에 이뤄지고, 길이 실패는 `invalid_output_rate` 에 정직하게
+드러납니다.
+
+### structured output 인데 404 가 난다
+
+모델 단위 `supported_parameters` 는 endpoint 들의 **합집합**이라 낙관적입니다. 실제로 그
+스키마를 처리할 endpoint 가 없으면 `require_parameters: true` 에서 404 가 납니다.
+`https://openrouter.ai/api/v1/models/<slug>/endpoints` 로 endpoint별 지원을 확인하고,
+해당 모델에 `parameters.structured_outputs: false` 를 설정하세요. 그러면 사전 검사가
+`json_schema` 모드 실행을 **요청 전에** 막고, `text` 모드는 정상 동작합니다.
 
 ### 실행이 `ABORTED` 로 끝났다
 ### 실행이 `ABORTED` 로 끝났다

@@ -12,14 +12,25 @@ a difference in instructions.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Sequence
+from typing import Any, Sequence
 
-__all__ = ["PROMPT_VERSIONS", "RenderedPrompt", "summarization_prompt", "hallucination_prompt", "classification_prompt", "judge_prompt"]
+__all__ = [
+    "PROMPT_VERSIONS",
+    "RenderedPrompt",
+    "summarization_prompt",
+    "hallucination_prompt",
+    "classification_prompt",
+    "classification_json_schema",
+    "judge_prompt",
+]
 
 PROMPT_VERSIONS = {
     "summarization": "sum-1",
     "hallucination": "halu-1",
     "classification": "cls-1",
+    # Structured-output variant: the model returns a JSON array constrained to the
+    # frozen label space instead of writing `<n>: <intent number>` by hand.
+    "classification_json_schema": "cls-json-1",
     "judge": "judge-1",
 }
 
@@ -166,21 +177,103 @@ def format_label_space(label_space: Sequence[str]) -> str:
     return "\n".join(f"{i}: {label}" for i, label in enumerate(label_space, start=1))
 
 
+# --- structured-output variant ------------------------------------------- #
+# With `response_format`, the answer is constrained to the label space by the
+# provider, so the prompt asks for intent *names* and drops the numbering
+# indirection: an off-by-one in a number list is invisible, a wrong name is not.
+_CLS_JSON_SYSTEM = {
+    "en": (
+        "You are an intent classifier for a voice assistant. You reply with a single "
+        "JSON object matching the given schema, and nothing else."
+    ),
+    "ko": (
+        "당신은 음성 비서의 인텐트 분류기다. 주어진 스키마에 맞는 JSON 객체 하나만 "
+        "출력하고, 그 외에는 아무것도 출력하지 않는다."
+    ),
+}
+
+_CLS_JSON_USER = {
+    "en": (
+        "Classify each user utterance into exactly one intent from the list below.\n\n"
+        "Intents:\n{labels}\n\n"
+        "Utterances:\n{items}\n\n"
+        'Reply with exactly this JSON object: {{"answers": ["<intent for utterance 1>", '
+        '"<intent for utterance 2>", ...]}}\n'
+        "The `answers` array must contain exactly {count} intent names, in the same order "
+        "as the utterances above.\n\n"
+        "Answer:"
+    ),
+    "ko": (
+        "아래 목록에서 각 사용자 발화에 해당하는 인텐트를 정확히 하나 선택하라.\n\n"
+        "인텐트 목록:\n{labels}\n\n"
+        "발화:\n{items}\n\n"
+        '정확히 다음 JSON 객체만 출력하라: {{"answers": ["<1번 발화의 인텐트>", '
+        '"<2번 발화의 인텐트>", ...]}}\n'
+        "`answers` 배열에는 위 발화와 같은 순서로 정확히 {count}개의 인텐트 이름이 들어가야 한다.\n\n"
+        "답:"
+    ),
+}
+
+
+def classification_json_schema(label_space: Sequence[str], count: int) -> dict[str, Any]:
+    """OpenRouter `response_format` constraining every answer to the label space.
+
+    `enum` is what makes an unparseable answer structurally impossible on a
+    provider that honours strict structured outputs.
+
+    The array length is deliberately NOT constrained with `minItems`/`maxItems`.
+    Providers compile the schema into a constrained-decoding state machine, and
+    a 60-value enum combined with a fixed array length of 20 exceeds Gemini's
+    limit outright ("The specified schema produces a constraint that has too
+    many states for serving"). The prompt still asks for exactly ``count``
+    answers, and `parse_batch_json_answer` invalidates the whole batch on a
+    length mismatch -- so alignment is still guaranteed, it is just enforced at
+    scoring time instead of decoding time, and a bad length shows up honestly in
+    `invalid_output_rate`.
+    """
+    del count  # length is enforced by the prompt and the parser, not the schema
+    return {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "intent_classification",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "answers": {
+                        "type": "array",
+                        "items": {"type": "string", "enum": list(label_space)},
+                    }
+                },
+                "required": ["answers"],
+                "additionalProperties": False,
+            },
+        },
+    }
+
+
 def classification_prompt(
     language: str,
     items: Sequence[str],
     label_space: Sequence[str],
+    *,
+    structured: bool = False,
 ) -> RenderedPrompt:
     lang = language if language in _CLS_USER else "en"
     numbered = "\n".join(f"{i}: {text}" for i, text in enumerate(items, start=1))
+    system = (_CLS_JSON_SYSTEM if structured else _CLS_SYSTEM)[lang]
+    template = (_CLS_JSON_USER if structured else _CLS_USER)[lang]
+    labels = (
+        "\n".join(f"- {label}" for label in label_space)
+        if structured
+        else format_label_space(label_space)
+    )
     return RenderedPrompt(
-        system=_CLS_SYSTEM[lang],
-        user=_CLS_USER[lang].format(
-            labels=format_label_space(label_space),
-            items=numbered,
-            count=len(items),
-        ),
-        template_version=PROMPT_VERSIONS["classification"],
+        system=system,
+        user=template.format(labels=labels, items=numbered, count=len(items)),
+        template_version=PROMPT_VERSIONS[
+            "classification_json_schema" if structured else "classification"
+        ],
     )
 
 

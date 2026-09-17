@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any, Sequence
 
 from llmbench.benchmarks.base import Task, TaskGroup, make_task
@@ -15,10 +16,26 @@ from llmbench.metrics.classification import (
     classification_scores,
     cross_lingual_consistency,
     parse_batch_answer,
+    parse_batch_json_answer,
 )
-from llmbench.prompts.registry import classification_prompt
+from llmbench.prompts.registry import classification_json_schema, classification_prompt
 
 __all__ = ["build_classification_tasks", "score_classification", "batch_records", "label_space_of"]
+
+
+def uses_structured_output(cfg: AppConfig) -> bool:
+    """Whether classification asks OpenRouter to constrain the answer to the label space."""
+    return cfg.benchmark.structured_output.classification_mode == "json_schema"
+
+
+def structured_output_version(cfg: AppConfig) -> str:
+    """Schema version recorded in the cache key.
+
+    The mode is part of it, so flipping `classification_mode` produces different
+    keys and the two conditions can coexist in one cache instead of overwriting
+    each other.
+    """
+    return f"{cfg.benchmark.structured_output.version}:{cfg.benchmark.structured_output.classification_mode}"
 
 
 def label_space_of(manifest: Manifest) -> list[str]:
@@ -46,6 +63,8 @@ def build_classification_tasks(
     answer_tokens = cfg.benchmark.generation.max_output_tokens.classification
     wanted = set(languages) if languages else None
     labels = label_space_of(manifest)
+    structured = uses_structured_output(cfg)
+    schema_version = structured_output_version(cfg)
 
     tasks: list[Task] = []
     for language in manifest.languages():
@@ -53,7 +72,9 @@ def build_classification_tasks(
             continue
         records = manifest.by_language(language)
         for batch_index, batch in enumerate(batch_records(records, bench.batch_size)):
-            prompt = classification_prompt(language, [r.payload["text"] for r in batch], labels)
+            prompt = classification_prompt(
+                language, [r.payload["text"] for r in batch], labels, structured=structured
+            )
             tasks.append(
                 make_task(
                     cfg=cfg,
@@ -68,11 +89,16 @@ def build_classification_tasks(
                     sample_content_hash=hash_obj([r.source_hash for r in batch]),
                     prompt=prompt,
                     answer_tokens=answer_tokens,
+                    response_format=(
+                        classification_json_schema(labels, len(batch)) if structured else None
+                    ),
+                    structured_output_version=schema_version,
                     alias_resolution=alias_resolution,
                     meta={
                         "batch_index": batch_index,
                         "batch_size": len(batch),
                         "label_count": len(labels),
+                        "structured_output": structured,
                     },
                 )
             )
@@ -90,6 +116,13 @@ def score_classification(
     bench = cfg.benchmark.benchmarks.classification
     labels = label_space_of(manifest)
     wanted = set(languages) if languages else None
+    structured = uses_structured_output(cfg)
+    # The parser differs per mode, so the evaluator identity has to differ too --
+    # otherwise a cached text-mode parse would be reused for a JSON reply.
+    evaluator = replace(
+        CLASSIFICATION_EVALUATOR,
+        config={**CLASSIFICATION_EVALUATOR.config, "output_mode": cfg.benchmark.structured_output.classification_mode},
+    )
 
     rows_by_language: dict[str, list[dict[str, Any]]] = {}
     for language in manifest.languages():
@@ -110,7 +143,7 @@ def score_classification(
             parsed: dict[int, int | None]
             cached = (
                 metric_cache.get(
-                    evaluator=CLASSIFICATION_EVALUATOR,
+                    evaluator=evaluator,
                     inference_result_hash=inf_hash,
                     reference_hash=reference_hash,
                 )
@@ -120,10 +153,14 @@ def score_classification(
             if cached is not None:
                 parsed = {int(k): v for k, v in cached["answers"].items()}
             elif status == "SUCCESS":
-                parsed = parse_batch_answer(output, len(batch), len(labels))
+                parsed = (
+                    parse_batch_json_answer(output, len(batch), labels)
+                    if structured
+                    else parse_batch_answer(output, len(batch), len(labels))
+                )
                 if metric_cache is not None:
                     metric_cache.put(
-                        evaluator=CLASSIFICATION_EVALUATOR,
+                        evaluator=evaluator,
                         inference_result_hash=inf_hash,
                         reference_hash=reference_hash,
                         value={"answers": {str(k): v for k, v in parsed.items()}},
@@ -172,10 +209,11 @@ def score_classification(
         "per_language": per_language,
         "overall": overall,
         "cross_lingual": consistency,
+        "output_mode": cfg.benchmark.structured_output.classification_mode,
         "evaluators": {
             "classification_metrics": {
-                "version": CLASSIFICATION_EVALUATOR.version,
-                "config": CLASSIFICATION_EVALUATOR.config,
+                "version": evaluator.version,
+                "config": evaluator.config,
             }
         },
     }

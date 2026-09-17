@@ -9,7 +9,11 @@ from datetime import UTC, datetime
 from typing import Any, Callable, Sequence
 
 from llmbench.benchmarks.base import Task, TaskGroup
-from llmbench.benchmarks.classification import build_classification_tasks, score_classification
+from llmbench.benchmarks.classification import (
+    build_classification_tasks,
+    score_classification,
+    uses_structured_output,
+)
 from llmbench.benchmarks.hallucination import build_hallucination_tasks, score_hallucination
 from llmbench.benchmarks.summarization import build_summarization_tasks, score_summarization
 from llmbench.budget import BenchmarkEstimate, BudgetGuard, estimate_tasks
@@ -245,7 +249,7 @@ class BenchmarkRunner:
             seed=generation.seed if model.supports("seed") else None,
             reasoning=model.reasoning.to_request_payload() if model.supports("reasoning") else None,
             provider=model.routing.to_request_payload(),
-            response_format=task.response_format if model.supports("response_format") else None,
+            response_format=task.response_format if model.supports_json_schema() else None,
         )
 
     def _persist(
@@ -425,8 +429,9 @@ class BenchmarkRunner:
             sending.add("reasoning")
         if generation.seed is not None and model.supports("seed"):
             sending.add("seed")
-        if include_response_format and model.supports("response_format"):
-            sending.add("response_format")
+        if include_response_format and model.supports_json_schema():
+            # A strict schema needs both capabilities, so both are "in use".
+            sending.update({"response_format", "structured_outputs"})
         return sending
 
     def preflight_capabilities(
@@ -435,31 +440,60 @@ class BenchmarkRunner:
         metadata: dict[str, Any] | None,
         *,
         include_response_format: bool = False,
-    ) -> dict[str, Any]:
+    ) -> dict[str, Any]:  # noqa: D401
         """Compare configured parameters against OpenRouter's live metadata.
 
         This is what turns "1,300 identical 404s" into "stop, fix one line of
         config". It costs nothing extra: the /models response was already fetched
         for pricing.
         """
+        # A model that cannot serve a strict schema cannot run the structured
+        # condition at all. Letting it through would send the structured *prompt*
+        # without the schema and file the result as if it had been constrained.
+        unsupported_condition = (
+            [
+                {
+                    "parameter": "structured_outputs",
+                    "configured": False,
+                    "advertised": False,
+                    "severity": "error",
+                    "hint": (
+                        f"{model.model_id} cannot serve a strict json_schema response, so it "
+                        "cannot run classification with --classification-mode json_schema. "
+                        "Run it in text mode, or disable it for this comparison."
+                    ),
+                }
+            ]
+            if include_response_format and not model.supports_json_schema()
+            else []
+        )
+
         if not metadata:
-            return {"checked": False, "reason": "live model metadata unavailable", "blocking": []}
+            return {
+                "checked": False,
+                "reason": "live model metadata unavailable",
+                "blocking": unsupported_condition,
+            }
 
         entry = metadata.get(model.model_id)
         if entry is None:
             return {
                 "checked": False,
                 "reason": f"{model.model_id} is not listed by OpenRouter",
-                "blocking": [],
+                "blocking": unsupported_condition,
             }
 
         supported = entry.get("supported_parameters") or []
         if not supported:
-            return {"checked": False, "reason": "OpenRouter listed no supported_parameters", "blocking": []}
+            return {
+                "checked": False,
+                "reason": "OpenRouter listed no supported_parameters",
+                "blocking": unsupported_condition,
+            }
 
         sending = self._parameters_in_use(model, include_response_format=include_response_format)
         problems = model.capability_mismatches(supported)
-        blocking = [
+        blocking = unsupported_condition + [
             p for p in problems if p["severity"] == "error" and p["parameter"] in sending
         ]
         informational = [p for p in problems if p not in blocking]
@@ -623,7 +657,16 @@ class BenchmarkRunner:
             )
             ok, reason = guard.preflight(plan.estimate.est_total_cost)
 
-            preflight = self.preflight_capabilities(model, metadata)
+            # `response_format` only reaches the API when classification runs in
+            # structured-output mode, so only then is a model without support a
+            # blocking problem.
+            selected_benchmarks = list(benchmarks) if benchmarks else list(ALL_BENCHMARKS)
+            needs_response_format = (
+                "classification" in selected_benchmarks and uses_structured_output(self.cfg)
+            )
+            preflight = self.preflight_capabilities(
+                model, metadata, include_response_format=needs_response_format
+            )
             blocking = preflight.get("blocking") or []
             for problem in preflight.get("informational") or []:
                 log.info("capability note for %s: %s", model.model_id, problem["hint"])
@@ -804,6 +847,7 @@ class BenchmarkRunner:
             "routing": plan.model.routing.cache_material(),
             "reasoning": plan.model.reasoning.cache_material(),
             "prompt_versions": PROMPT_VERSIONS,
+            "structured_output": self.cfg.benchmark.structured_output.model_dump(),
             "pricing_snapshot": pricing.to_dict(),
         }
 
@@ -822,6 +866,7 @@ class BenchmarkRunner:
             "reasoning_config": plan.model.reasoning.cache_material(),
             "generation": self.cfg.benchmark.generation.cache_material(),
             "truncation_policy": self.cfg.benchmark.truncation.cache_material(),
+            "structured_output": self.cfg.benchmark.structured_output.model_dump(),
             "prompt_versions": PROMPT_VERSIONS,
             "metric_versions": {
                 "rouge": self.cfg.benchmark.metrics.rouge.version,

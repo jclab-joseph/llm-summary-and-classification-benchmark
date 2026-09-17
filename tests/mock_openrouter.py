@@ -168,6 +168,19 @@ class MockOpenRouter:
         user = next(m["content"] for m in messages if m["role"] == "user")
         content = self._answer(user, payload)
 
+        # Honour `response_format`: a provider with structured outputs returns a
+        # value drawn from the schema's enum, never free-form text.
+        schema = ((payload.get("response_format") or {}).get("json_schema") or {}).get("schema")
+        if schema and "answers" in (schema.get("properties") or {}):
+            choices = schema["properties"]["answers"]["items"]["enum"]
+            block = user.split("Utterances:\n")[-1].split("발화:\n")[-1].split("\n\n", 1)[0]
+            items = [line for line in block.splitlines() if re.match(r"^\d+: ", line)]
+            # One answer per utterance: the schema no longer pins the length, so a
+            # provider honouring it still has to get the count right on its own.
+            content = json.dumps(
+                {"answers": [choices[_stable_int(item) % len(choices)] for item in items]}
+            )
+
         prompt_tokens = sum(_approx_tokens(m["content"]) for m in messages)
         completion_tokens = min(_approx_tokens(content), payload["max_tokens"])
         cost = round(prompt_tokens * MOCK_INPUT_RATE + completion_tokens * MOCK_OUTPUT_RATE, 10)

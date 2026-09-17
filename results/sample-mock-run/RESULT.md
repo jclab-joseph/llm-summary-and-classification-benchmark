@@ -2,7 +2,7 @@
 
 <!-- 이 파일은 `benchmark report` 가 자동 생성합니다. 직접 수정하지 마세요. -->
 
-생성: `2026-09-16T04:48:29+00:00` · benchmark version `1.0.0` · API provider: **OpenRouter**
+생성: `2026-09-17T00:38:53+00:00` · benchmark version `1.0.0` · API provider: **OpenRouter**
 
 같은 데이터를 담은 스프레드시트: [`results/benchmark_results.xlsx`](results/benchmark_results.xlsx)
 
@@ -233,5 +233,5 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 
 | Model | Status | 실행 시각(UTC) | Bench ver. | Git commit | Cases | XL-Sum | HaluEval | AI-Hub | MASSIVE |
 | --- | --- | --- | --- | --- | ---: | --- | --- | --- | --- |
-| google/gemini-2.5-flash-lite | COMPLETED | 2026-09-16T04:48:26+00:00 | 1.0.0 | 8d709c8d679a | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
+| google/gemini-2.5-flash-lite | COMPLETED | 2026-09-17T00:38:50+00:00 | 1.0.0 | 259eab707098 | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 

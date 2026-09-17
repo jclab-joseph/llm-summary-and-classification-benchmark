@@ -337,7 +337,7 @@ def test_workbook_sheets_and_values(results):
 
     assert workbook.sheetnames == [
         "About", "Legend", "Leaderboard", "Summarization", "Hallucination", "Classification",
-        "CrossLingual", "SurfaceFacts", "Cost", "Usage", "Judge", "Runs",
+        "CrossLingual", "ClassificationModes", "SurfaceFacts", "Cost", "Usage", "Judge", "Runs",
     ]
 
     leaderboard = workbook["Leaderboard"]

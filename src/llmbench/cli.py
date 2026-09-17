@@ -129,6 +129,20 @@ def _num(value: Any, digits: int = 4) -> str:
     return f"{value:.{digits}f}"
 
 
+def _apply_classification_mode(cfg: AppConfig, mode: str | None) -> None:
+    """Override `structured_output.classification_mode` for this invocation.
+
+    The two modes produce different cache keys and different result files, so
+    both conditions can be measured without editing config/benchmark.yaml.
+    """
+    if mode is None:
+        return
+    if mode not in {"text", "json_schema"}:
+        console.print("[red]--classification-mode must be one of: text, json_schema[/red]")
+        raise typer.Exit(code=2)
+    cfg.benchmark.structured_output.classification_mode = mode
+
+
 def _selected_models(cfg: AppConfig, model: str | None, run_all: bool) -> list[ModelConfig]:
     if run_all:
         models = cfg.models.enabled_models()
@@ -493,11 +507,15 @@ def estimate(
     benchmark: Optional[list[str]] = typer.Option(None, "--benchmark", "-b", help="Limit to benchmarks."),
     language: Optional[list[str]] = typer.Option(None, "--language", "-l", help="Limit to languages (en/ko)."),
     budget_usd: float = typer.Option(None, "--budget-usd", help="Override the per-model budget."),
+    classification_mode: Optional[str] = typer.Option(
+        None, "--classification-mode", help="Classification answer format: text | json_schema."
+    ),
     refresh_pricing: bool = typer.Option(True, "--refresh-pricing/--no-refresh-pricing"),
     config_dir: Optional[str] = typer.Option(None, "--config-dir"),
 ) -> None:
     """Estimate the cost of the *pending* (uncached) work for a model."""
     cfg = _load(config_dir)
+    _apply_classification_mode(cfg, classification_mode)
     _load_dotenv(cfg)
     store = _store(cfg)
     runner = BenchmarkRunner(cfg, store)
@@ -764,6 +782,11 @@ def run(
     skip_preflight: bool = typer.Option(
         False, "--skip-preflight", help="Run even if the model rejects a parameter we send."
     ),
+    classification_mode: Optional[str] = typer.Option(
+        None,
+        "--classification-mode",
+        help="Classification answer format: text | json_schema (OpenRouter structured output).",
+    ),
     report: bool = typer.Option(
         True, "--report/--no-report", help="Regenerate RESULT.md, the workbook and the leaderboard."
     ),
@@ -778,9 +801,15 @@ def run(
         console.print("[red]--judge must be one of: none, cheap, strong[/red]")
         raise typer.Exit(code=2)
 
+    _apply_classification_mode(cfg, classification_mode)
     store = _store(cfg)
     budget = budget_usd if budget_usd is not None else cfg.benchmark.budget.default_usd
     exit_code = 0
+    if cfg.benchmark.structured_output.classification_mode != "text":
+        console.print(
+            f"[dim]classification answer format: "
+            f"{cfg.benchmark.structured_output.classification_mode}[/dim]"
+        )
 
     for entry in _selected_models(cfg, model, all_models):
         console.rule(f"[bold]{entry.model_id}")

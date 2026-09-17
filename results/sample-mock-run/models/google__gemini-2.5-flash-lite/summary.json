@@ -1,7 +1,10 @@
 {
-  "schema_version": 1,
-  "generated_at": "2026-09-16T04:48:28+00:00",
-  "run_id": "run-20260916T044826-3b4b236c",
+  "schema_version": 2,
+  "generated_at": "2026-09-17T00:38:52+00:00",
+  "run_id": "run-20260917T003850-a08557e6",
+  "variant": {
+    "classification_mode": "text"
+  },
   "status": "COMPLETED",
   "api_provider": "openrouter",
   "model": {
@@ -69,7 +72,7 @@
       "input_per_million": 0.1,
       "output_per_million": 0.4,
       "cached_input_per_million": 0.025,
-      "retrieved_at": "2026-09-16T04:48:25+00:00",
+      "retrieved_at": "2026-09-17T00:38:49+00:00",
       "source": "openrouter"
     },
     "authoritative_source": "openrouter usage.cost",
@@ -467,12 +470,14 @@
         "both_wrong": 979,
         "both_wrong_rate": 0.979
       },
+      "output_mode": "text",
       "evaluators": {
         "classification_metrics": {
           "version": "clsmetrics-1.0",
           "config": {
             "averaging": "macro",
-            "invalid_counts_as_wrong": true
+            "invalid_counts_as_wrong": true,
+            "output_mode": "text"
           }
         }
       }
@@ -482,7 +487,7 @@
   "reproducibility": {
     "benchmark_package_version": "1.0.0",
     "benchmark_version": "1.0.0",
-    "git_commit": "8d709c8d679a9226e30d04c8bb8a4757529688a6",
+    "git_commit": "259eab707098181699d06f21498431115d9b9625",
     "git_dirty": true,
     "python_version": "3.12.3",
     "python_implementation": "CPython",
@@ -504,8 +509,8 @@
       "tenacity": "not-installed",
       "pyarrow": "25.0.1"
     },
-    "captured_at": "2026-09-16T04:48:26+00:00",
-    "executed_at": "2026-09-16T04:48:26+00:00",
+    "captured_at": "2026-09-17T00:38:50+00:00",
+    "executed_at": "2026-09-17T00:38:50+00:00",
     "api_provider": "openrouter",
     "model_id": "google/gemini-2.5-flash-lite",
     "requested_model": "google/gemini-2.5-flash-lite",
@@ -543,10 +548,16 @@
       "hallucination_max_source_tokens": 1600,
       "word_boundary": true
     },
+    "structured_output": {
+      "version": "so-1",
+      "classification_mode": "text",
+      "judge_mode": "json_schema"
+    },
     "prompt_versions": {
       "summarization": "sum-1",
       "hallucination": "halu-1",
       "classification": "cls-1",
+      "classification_json_schema": "cls-json-1",
       "judge": "judge-1"
     },
     "metric_versions": {
@@ -612,7 +623,7 @@
       "input_per_million": 0.1,
       "output_per_million": 0.4,
       "cached_input_per_million": 0.025,
-      "retrieved_at": "2026-09-16T04:48:25+00:00",
+      "retrieved_at": "2026-09-17T00:38:49+00:00",
       "source": "openrouter"
     }
   }

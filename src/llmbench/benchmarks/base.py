@@ -14,6 +14,7 @@ from llmbench.config.loader import AppConfig
 from llmbench.config.schema import ModelConfig
 from llmbench.core.text import estimate_tokens
 from llmbench.cache.keys import build_inference_key
+from llmbench.core.canonical import hash_obj
 from llmbench.prompts.registry import RenderedPrompt
 
 __all__ = ["Task", "TaskGroup", "make_task"]
@@ -72,6 +73,7 @@ def make_task(
     prompt: RenderedPrompt,
     answer_tokens: int,
     response_format: dict[str, Any] | None = None,
+    structured_output_version: str | None = None,
     alias_resolution: str | None = None,
     meta: dict[str, Any] | None = None,
 ) -> Task:
@@ -108,7 +110,15 @@ def make_task(
         seed=seed,
         tools_enabled=generation.tools_enabled,
         web_search_enabled=generation.web_search_enabled,
-        structured_output_schema_version=cfg.benchmark.structured_output.version,
+        structured_output_schema_version=(
+            structured_output_version or cfg.benchmark.structured_output.version
+        ),
+        # The response schema is part of the request, so a change to it has to
+        # produce a different key -- otherwise a cached answer would be credited
+        # to a schema that never produced it.
+        extra=(
+            {"response_format_hash": hash_obj(response_format)} if response_format else {}
+        ),
         truncation_policy_version=cfg.benchmark.truncation.version,
         generation_config_version=generation.version,
         alias_resolution=alias_resolution,

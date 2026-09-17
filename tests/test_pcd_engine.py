@@ -62,7 +62,8 @@ class StubContext:
             seq = raw.seq_id[index][0]
             path = self.seq_paths.get(seq, ()) + (raw.token[index],)
             self.seq_paths[seq] = path
-            self._logits.append(self.logits_for(path))
+            if raw.logits[index]:
+                self._logits.append(self.logits_for(path))
 
     def get_logits_ith(self, index: int) -> np.ndarray:
         return self._logits[index]
@@ -98,6 +99,8 @@ def make_engine(table, n_seq_max: int = 8) -> ParallelConstrainedEngine:
     engine._batch = StubBatch()
     engine._n_vocab = VOCAB
     engine._prompt_len = 0
+    engine._prefix_reuse = True
+    engine._chat_template = None
     return engine
 
 
@@ -105,7 +108,7 @@ def score_candidates(engine, tree, root_logits):
     from llmbench.local.pcd_engine import _Search
 
     state = _Search()
-    engine._walk(tree, np.array(root_logits, dtype=np.float32), state)
+    engine._walk(tree, np.array(root_logits, dtype=np.float32), state, 0, 0)
     return state
 
 
@@ -271,3 +274,46 @@ def test_the_two_decoders_do_not_share_cache_keys(prepared):
             t.cache_key for t in build_classification_tasks(prepared, model, manifest).tasks
         }
     assert by_engine["llama_cpp"].isdisjoint(by_engine["llama_cpp_pcd"])
+
+
+# --------------------------------------------------------------------------- #
+# prompt formatting
+# --------------------------------------------------------------------------- #
+def test_prompt_uses_the_models_own_chat_template():
+    """Hardcoding ChatML is right for Qwen2.5 and wrong for anything else."""
+    from jinja2.sandbox import ImmutableSandboxedEnvironment
+
+    engine = make_engine({})
+    template = ImmutableSandboxedEnvironment().from_string(
+        "{% for m in messages %}[{{ m.role }}]{{ m.content }}{% endfor %}"
+        "{% if add_generation_prompt %}[go]{% endif %}"
+    )
+    engine._chat_template = template
+
+    assert engine._render_prompt("S", "U") == "[system]S[user]U[go]"
+
+
+def test_prompt_falls_back_to_chatml_without_a_template():
+    engine = make_engine({})
+    engine._chat_template = None
+    prompt = engine._render_prompt("S", "U")
+    assert prompt == "<|im_start|>system\nS<|im_end|>\n<|im_start|>user\nU<|im_end|>\n<|im_start|>assistant\n"
+
+
+def test_a_broken_template_falls_back_rather_than_failing():
+    from jinja2.sandbox import ImmutableSandboxedEnvironment
+
+    engine = make_engine({})
+    engine._chat_template = ImmutableSandboxedEnvironment().from_string("{{ boom.explode() }}")
+    assert engine._render_prompt("S", "U").startswith("<|im_start|>system")
+
+
+def test_thinking_is_disabled_when_the_template_supports_it():
+    """A thinking model would otherwise open a block to score the label inside."""
+    from jinja2.sandbox import ImmutableSandboxedEnvironment
+
+    engine = make_engine({})
+    engine._chat_template = ImmutableSandboxedEnvironment().from_string(
+        "{% if enable_thinking %}THINK{% else %}NOTHINK{% endif %}"
+    )
+    assert engine._render_prompt("S", "U") == "NOTHINK"

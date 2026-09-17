@@ -55,6 +55,10 @@ ENGINE_VERSION = "pcd-2"
 log = get_logger("local.pcd")
 
 
+def _template_error(message: str) -> None:
+    raise BenchmarkError(f"chat template raised: {message}")
+
+
 @dataclass(slots=True)
 class _Search:
     """Mutable state of one best-first tree walk."""
@@ -204,8 +208,61 @@ class ParallelConstrainedEngine:
         self._n_vocab = self._model.n_vocab()
         self._prompt_len = 0
         self._free_seqs: list[int] = list(range(1, self.n_seq_max))
+        self._chat_template = self._load_chat_template()
+        self._prefix_reuse = True
+        self._prefix_tokens = []
 
     # ------------------------------------------------------------------ #
+    # prompt formatting
+    # ------------------------------------------------------------------ #
+    def _load_chat_template(self):
+        """Compile the chat template the GGUF itself carries.
+
+        Hardcoding ChatML works for Qwen2.5 and quietly produces the wrong prompt
+        for anything else. The high-level `Llama` wrapper resolves this from GGUF
+        metadata; this engine builds its own context, so it has to do the same.
+        """
+        try:
+            template = (self._model.metadata() or {}).get("tokenizer.chat_template")
+        except Exception:  # pragma: no cover - metadata is optional
+            template = None
+        if not template:
+            log.warning("%s has no chat template; falling back to ChatML", self.model_path.name)
+            return None
+        try:
+            from jinja2 import Environment
+            from jinja2.sandbox import ImmutableSandboxedEnvironment
+
+            environment = ImmutableSandboxedEnvironment(trim_blocks=True, lstrip_blocks=True)
+            environment.globals["raise_exception"] = _template_error
+            environment.globals["strftime_now"] = lambda fmt: ""
+            return environment.from_string(template)
+        except Exception as exc:  # pragma: no cover - depends on the template
+            log.warning("could not compile the chat template (%s); falling back to ChatML", exc)
+            return None
+
+    def _render_prompt(self, system: str, user: str) -> str:
+        messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
+        if self._chat_template is not None:
+            try:
+                return self._chat_template.render(
+                    messages=messages,
+                    add_generation_prompt=True,
+                    # Thinking models otherwise open a reasoning block the engine
+                    # would then have to score a label inside of.
+                    enable_thinking=False,
+                    tools=None,
+                    bos_token="",
+                    eos_token="",
+                )
+            except Exception as exc:  # pragma: no cover - depends on the template
+                log.warning("chat template failed (%s); falling back to ChatML", exc)
+        return (
+            f"<|im_start|>system\n{system}<|im_end|>\n"
+            f"<|im_start|>user\n{user}<|im_end|>\n"
+            f"<|im_start|>assistant\n"
+        )
+
     def _tree_for(self, candidates: Sequence[str]) -> tuple[TokenTree, list[list[int]]]:
         key = tuple(candidates)
         cached = self._trees.get(key)
@@ -227,65 +284,109 @@ class ParallelConstrainedEngine:
     # ------------------------------------------------------------------ #
     # batched decoding
     # ------------------------------------------------------------------ #
-    def _decode(self, items: Sequence[tuple[int, int, int]]) -> list[np.ndarray]:
-        """Decode ``(token, position, seq_id)`` triples in one pass.
+    def _decode(self, items: Sequence[tuple[int, int, int, bool]]) -> list[np.ndarray]:
+        """Decode ``(token, position, seq_id, want_logits)`` tuples in one pass.
 
         This is the broadcast step: every branch of the current tree depth lives
         in its own KV sequence sharing the prompt's cells, so one decode produces
         the logits for all of them instead of one decode per branch.
+
+        Only the positions that are actually read ask for logits. Requesting them
+        everywhere makes llama.cpp allocate `n_tokens x n_vocab` floats, which for
+        a 600-token prefill over a 150k vocabulary is a 365 MB buffer and enough
+        to make `llama_decode` fail outright.
         """
         if not items:
             return []
         batch = self._batch.batch
         batch.n_tokens = len(items)
-        for index, (token, position, seq_id) in enumerate(items):
+        for index, (token, position, seq_id, want) in enumerate(items):
             batch.token[index] = token
             batch.pos[index] = position
             batch.n_seq_id[index] = 1
             batch.seq_id[index][0] = seq_id
-            batch.logits[index] = True
+            batch.logits[index] = want
         self._ctx.decode(self._batch)
         self.telemetry["decodes"] += 1
         return [
             np.ctypeslib.as_array(self._ctx.get_logits_ith(index), shape=(self._n_vocab,)).astype(
                 np.float32, copy=True
             )
-            for index in range(len(items))
+            for index, item in enumerate(items)
+            if item[3]
         ]
 
-    def _prefill(self, tokens: list[int]) -> np.ndarray:
-        """Evaluate the prompt into sequence 0, reusing the shared prefix.
+    def _prefill(self, tokens: list[int]) -> tuple[np.ndarray, int, int]:
+        """Evaluate the prompt into sequence 0. Returns (logits, seq, length).
 
         Every utterance in a run carries the same system message -- the whole
-        label catalog -- so the reusable prefix is most of the prompt.
+        label catalog -- so the shared prefix is most of the prompt. It is kept in
+        sequence 0 and the differing tail is rewound and re-evaluated.
+
+        Multimodal-RoPE models reject that: Qwen3.5 requires each sequence's
+        positions to strictly increase, so llama.cpp refuses a batch restarting at
+        a position the rewind just freed. Those models fall back to a full prefill.
+
+        Copying the prefix into a fresh sequence would sidestep the position check
+        and is *wrong*: M-RoPE positions are not a scalar the copy reconstructs,
+        and the run completes with quietly degraded accuracy (measured: Qwen3.5-4B
+        0.838 -> 0.750 on the same 80 utterances). Slower and right beats faster
+        and silently wrong.
         """
         shared = 0
-        for a, b in zip(self._prefix_tokens, tokens):
-            if a != b:
-                break
-            shared += 1
-        # Always re-evaluate at least the final token so fresh logits exist.
-        shared = min(shared, len(tokens) - 1)
+        if self._prefix_reuse:
+            for a, b in zip(self._prefix_tokens, tokens):
+                if a != b:
+                    break
+                shared += 1
+            # Always re-evaluate at least the final token so fresh logits exist.
+            shared = min(shared, len(tokens) - 1)
 
-        self._ctx.kv_cache_seq_rm(self.PROMPT_SEQ, shared, -1)
-        self.telemetry["prefix_reused"] += shared
-        self.telemetry["prefill_tokens"] += len(tokens) - shared
+        try:
+            logits = self._prefill_from(tokens, shared)
+        except RuntimeError as exc:
+            if not self._prefix_reuse or shared == 0:
+                raise
+            log.info(
+                "%s rejects prefix reuse (%s); prefilling in full from now on",
+                self.model_path.name,
+                str(exc).strip().splitlines()[-1] if str(exc).strip() else exc,
+            )
+            self._prefix_reuse = False
+            logits = self._prefill_from(tokens, 0)
+        return logits, self.PROMPT_SEQ, len(tokens)
 
-        logits: list[np.ndarray] = []
-        remaining = list(enumerate(tokens[shared:], start=shared))
-        chunk = self._batch._n_tokens
-        for offset in range(0, len(remaining), chunk):
-            window = remaining[offset : offset + chunk]
-            logits = self._decode([(token, position, self.PROMPT_SEQ) for position, token in window])
-
+    def _prefill_from(self, tokens: list[int], shared: int) -> np.ndarray:
+        self._ctx.kv_cache_seq_rm(self.PROMPT_SEQ, shared if shared else -1, -1)
+        logits = self._decode_span(tokens, shared, self.PROMPT_SEQ)
         self._prefix_tokens = list(tokens)
         self._prompt_len = len(tokens)
+        return logits
+
+    def _decode_span(self, tokens: list[int], start: int, seq_id: int) -> np.ndarray:
+        """Decode ``tokens[start:]`` into ``seq_id``, asking for the last logits only."""
+        self.telemetry["prefix_reused"] += start
+        self.telemetry["prefill_tokens"] += len(tokens) - start
+
+        positions = list(range(start, len(tokens)))
+        last = positions[-1]
+        chunk = self._batch._n_tokens
+        logits: list[np.ndarray] = []
+        for offset in range(0, len(positions), chunk):
+            window = positions[offset : offset + chunk]
+            produced = self._decode(
+                [(tokens[position], position, seq_id, position == last) for position in window]
+            )
+            if produced:
+                logits = produced
         return logits[-1]
 
     # ------------------------------------------------------------------ #
     # tree walk
     # ------------------------------------------------------------------ #
-    def _walk(self, root: TokenTree, root_logits: np.ndarray, state: _Search) -> None:
+    def _walk(
+        self, root: TokenTree, root_logits: np.ndarray, state: _Search, seq_id: int, prompt_len: int
+    ) -> None:
         """Expand the tree one depth at a time, one batched decode per depth.
 
         Branches are pruned against the best complete candidate found so far.
@@ -295,9 +396,7 @@ class ParallelConstrainedEngine:
         subtrees go unevaluated.
         """
         # (node, accumulated score, seq id holding its prefix, next position)
-        frontier: list[tuple[TokenTree, float, int, int]] = [
-            (root, 0.0, self.PROMPT_SEQ, self._prompt_len)
-        ]
+        frontier: list[tuple[TokenTree, float, int, int]] = [(root, 0.0, seq_id, prompt_len)]
         frontier_logits = [root_logits]
 
         while frontier:
@@ -343,15 +442,15 @@ class ParallelConstrainedEngine:
                 branch_seq = self._take_seq()
                 # Broadcast: the branch gets its own view of the parent's cells.
                 self._ctx.kv_cache_seq_cp(seq_id, branch_seq, 0, position)
-                items.append((token, position, branch_seq))
+                items.append((token, position, branch_seq, True))
                 next_frontier.append((child, score, branch_seq, position + 1))
             self.telemetry["branches_evaluated"] += len(items)
 
             frontier_logits = self._decode(items)
             # Parent sequences are no longer referenced once the copies exist.
-            for seq_id in parents:
-                if seq_id != self.PROMPT_SEQ:
-                    self._release_seq(seq_id)
+            for parent in parents:
+                if parent not in (self.PROMPT_SEQ, seq_id):
+                    self._release_seq(parent)
             frontier = next_frontier
 
     def _take_seq(self) -> int:
@@ -372,18 +471,14 @@ class ParallelConstrainedEngine:
 
         started = time.perf_counter()
         tree, _ = self._tree_for(candidates)
-        prompt = (
-            f"<|im_start|>system\n{system}<|im_end|>\n"
-            f"<|im_start|>user\n{user}<|im_end|>\n"
-            f"<|im_start|>assistant\n"
-        )
+        prompt = self._render_prompt(system, user)
         tokens = list(self._model.tokenize(prompt.encode("utf-8"), add_bos=True, special=True))
         decodes_before = self.telemetry["decodes"]
         branches_before = self.telemetry["branches_evaluated"]
 
-        logits = self._prefill(tokens)
+        logits, working_seq, prompt_len = self._prefill(tokens)
         state = _Search()
-        self._walk(tree, logits, state)
+        self._walk(tree, logits, state, working_seq, prompt_len)
         self._reset_branches()
 
         if state.best is None:
@@ -425,6 +520,8 @@ class ParallelConstrainedEngine:
             "engine_version": llama_cpp.__version__,
             "model_file": self.model_path.name,
             "decoding": "parallel-constrained (prefill + logit slicing + broadcast token tree)",
+            "chat_template": "gguf" if self._chat_template is not None else "chatml-fallback",
+            "prefix_reuse": self._prefix_reuse,
             "n_seq_max": self.n_seq_max,
             "telemetry": dict(self.telemetry),
             "runtime": {

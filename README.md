@@ -190,6 +190,15 @@ VRAM 이 부족하면 llama.cpp 는 **조용히 CPU 로 내려가지 않고 프�
 | `llama_cpp_pcd` | Parallel Constrained Decoding | 프롬프트를 한 번 prefill 하고, **로짓을 후보 집합으로 슬라이싱** 해서 답을 읽어냅니다. 생성하지 않습니다. |
 | `llama_cpp` | 문법 유도 생성 (baseline) | GBNF 문법으로 마스킹하며 토큰을 한 개씩 생성합니다. |
 
+기본 설정에 들어 있는 로컬 모델입니다.
+
+| model_id | 가중치 | engine |
+|---|---|---|
+| `local/qwen2.5-1.5b-instruct-q8-gguf-pcd` | Qwen2.5 1.5B Instruct Q8_0 | PCD |
+| `local/qwen2.5-1.5b-instruct-q8-gguf` | 같은 가중치 | GBNF (구현 교차 검증용) |
+| `local/qwen3.5-2b-q8-gguf` | Qwen3.5 2B Q8_0 (`unsloth`) | PCD |
+| `local/qwen3.5-4b-q4km-gguf` | Qwen3.5 4B Q4_K_M (`unsloth`) | PCD |
+
 둘 다 파싱 불가능한 답이 구조적으로 나올 수 없습니다. 호스팅 `json_schema` 가 제공자에게
 사서 쓰는 보장을 로컬에서 직접 수행하는 것입니다.
 
@@ -213,6 +222,11 @@ VRAM 이 부족하면 llama.cpp 는 **조용히 CPU 로 내려가지 않고 프�
 
 동시에 살아 있는 분기가 `n_seq_max` 를 넘으면 **오류로 중단합니다.** 잘라내면 탐색이 조용히
 바뀌어 argmax 가 달라질 수 있기 때문입니다. 시퀀스는 싸니 값을 올리세요.
+
+**프롬프트는 GGUF 에 내장된 chat template 을 씁니다.** ChatML 을 하드코딩하면 Qwen2.5 에서는
+맞지만 다른 모델에서는 조용히 틀린 프롬프트가 됩니다. 예를 들어 Qwen3.5 는 thinking 모델이라
+assistant 차례에 `<think>\n\n</think>\n\n` 이 붙습니다(비-thinking 모드). 이 자리를 맞추지
+않으면 모델이 `<think>` 를 열려는 위치에서 라벨을 채점하게 됩니다.
 
 **원 구현과 두 가지가 다릅니다.**
 
@@ -1025,6 +1039,20 @@ Gemini 계열이 structured output 요청에 400 으로 응답할 때 나옵니�
 `https://openrouter.ai/api/v1/models/<slug>/endpoints` 로 endpoint별 지원을 확인하고,
 해당 모델에 `parameters.structured_outputs: false` 를 설정하세요. 그러면 사전 검사가
 `json_schema` 모드 실행을 **요청 전에** 막고, `text` 모드는 정상 동작합니다.
+
+### 로컬 실행이 느리다 / `rejects prefix reuse` 로그가 보인다
+
+PCD 는 발화마다 같은 시스템 메시지(인텐트 60개)를 다시 prefill 하지 않으려고, 공유 접두부를
+KV 캐시에 두고 달라지는 뒷부분만 되감아 재평가합니다.
+
+멀티모달 RoPE 모델(Qwen3.5 계열)은 이를 거부합니다. 시퀀스의 위치가 **엄격히 증가**해야 해서,
+되감아 비운 위치에서 다시 시작하는 배치를 llama.cpp 가 받지 않습니다. 이 경우 엔진은 재사용을
+포기하고 매번 전체 prefill 합니다. 로그에 한 번 기록되고, 이후에는 조용히 느려집니다.
+
+접두부를 **새 시퀀스로 복사**하면 위치 검사는 통과하지만 **답이 틀려집니다.** M-RoPE 위치는
+복사로 복원되는 스칼라가 아니라서, 오류 없이 정확도만 조용히 떨어집니다(실측: Qwen3.5-4B 가
+같은 발화 80건에서 0.838 → 0.750). 그래서 그 경로는 쓰지 않습니다. 느리고 맞는 쪽이
+빠르고 조용히 틀린 쪽보다 낫습니다.
 
 ### `ran out of KV sequences` / `branches need evaluating`
 

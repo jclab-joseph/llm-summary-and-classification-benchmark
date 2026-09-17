@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-09-17T03:02:41+00:00",
-  "run_id": "run-20260917T030240-7b921abc",
+  "generated_at": "2026-09-17T04:41:23+00:00",
+  "run_id": "run-20260917T044122-e81422e2",
   "variant": {
     "classification_mode": "text"
   },
@@ -57,13 +57,13 @@
     }
   },
   "usage": {
-    "prompt_tokens": 1441986,
+    "prompt_tokens": 2162979,
     "cached_tokens": 0,
     "cache_write_tokens": 0,
-    "completion_tokens": 10903,
+    "completion_tokens": 16353,
     "reasoning_tokens": 0,
-    "total_tokens": 1452889,
-    "successful_cases": 4000
+    "total_tokens": 2179332,
+    "successful_cases": 6000
   },
   "cost": {
     "pricing_snapshot": {
@@ -89,15 +89,15 @@
     "attempts": {
       "by_status": {
         "SUCCESS": {
-          "count": 4000,
+          "count": 6000,
           "usage_cost": 0.0
         }
       },
-      "success_attempts": 4000,
+      "success_attempts": 6000,
       "success_cost": 0.0,
       "error_attempts": 0,
       "error_cost": 0,
-      "total_attempts": 4000,
+      "total_attempts": 6000,
       "total_cost": 0.0
     },
     "billing": "not applicable - local inference, nothing was billed"
@@ -124,7 +124,7 @@
     "by_failure_guard": 0,
     "by_budget": 0
   },
-  "log_path": "/home/joseph/jcworkspace/llm-summary-and-classification-benchmark/data/logs/benchmark-20260917T023433.log",
+  "log_path": "/home/joseph/jcworkspace/llm-summary-and-classification-benchmark/data/logs/benchmark-20260917T044117.log",
   "notes": [],
   "metrics": {
     "classification": {
@@ -137,9 +137,9 @@
       "per_language": {
         "en": {
           "cases": 1000,
-          "accuracy": 0.575,
-          "macro_f1": 0.5459294856069367,
-          "correct": 575,
+          "accuracy": 0.578,
+          "macro_f1": 0.5486232650628055,
+          "correct": 578,
           "invalid_outputs": 0,
           "invalid_output_rate": 0.0,
           "failed_cases": 0,
@@ -148,7 +148,7 @@
         "ko": {
           "cases": 1000,
           "accuracy": 0.462,
-          "macro_f1": 0.4217011621299711,
+          "macro_f1": 0.4225847136466017,
           "correct": 462,
           "invalid_outputs": 0,
           "invalid_output_rate": 0.0,
@@ -158,9 +158,9 @@
       },
       "overall": {
         "cases": 2000,
-        "accuracy": 0.5185,
-        "macro_f1": 0.4882467464725742,
-        "correct": 1037,
+        "accuracy": 0.52,
+        "macro_f1": 0.49121052634253753,
+        "correct": 1040,
         "invalid_outputs": 0,
         "invalid_output_rate": 0.0,
         "failed_cases": 0,
@@ -168,16 +168,16 @@
       },
       "cross_lingual": {
         "paired_cases": 1000,
-        "prediction_agreement": 0.555,
-        "consistency": 0.713,
-        "both_correct": 375,
-        "both_correct_rate": 0.375,
-        "en_only_correct": 200,
-        "en_only_correct_rate": 0.2,
-        "ko_only_correct": 87,
-        "ko_only_correct_rate": 0.087,
-        "both_wrong": 338,
-        "both_wrong_rate": 0.338
+        "prediction_agreement": 0.546,
+        "consistency": 0.706,
+        "both_correct": 373,
+        "both_correct_rate": 0.373,
+        "en_only_correct": 205,
+        "en_only_correct_rate": 0.205,
+        "ko_only_correct": 89,
+        "ko_only_correct_rate": 0.089,
+        "both_wrong": 333,
+        "both_wrong_rate": 0.333
       },
       "output_mode": "local_constrained",
       "evaluators": {
@@ -196,7 +196,7 @@
   "reproducibility": {
     "benchmark_package_version": "1.0.0",
     "benchmark_version": "1.0.0",
-    "git_commit": "62bd51cc58aff3b5128149c0e7098fc7bb1caa80",
+    "git_commit": "12ce0741fedd9b770a4593296378e383c3ca80b7",
     "git_dirty": true,
     "python_version": "3.12.3",
     "python_implementation": "CPython",
@@ -218,8 +218,8 @@
       "tenacity": "not-installed",
       "pyarrow": "25.0.1"
     },
-    "captured_at": "2026-09-17T03:02:40+00:00",
-    "executed_at": "2026-09-17T03:02:40+00:00",
+    "captured_at": "2026-09-17T04:41:22+00:00",
+    "executed_at": "2026-09-17T04:41:22+00:00",
     "api_provider": "openrouter",
     "model_id": "local/qwen2.5-1.5b-instruct-q8-gguf",
     "requested_model": "local/qwen2.5-1.5b-instruct-q8-gguf",
@@ -264,6 +264,7 @@
     },
     "local_engine": {
       "engine": "llama_cpp",
+      "algorithm_version": "1",
       "repo": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
       "filename": "qwen2.5-1.5b-instruct-q8_0.gguf",
       "revision": "91cad51170dc346986eccefdc2dd33a9da36ead9",

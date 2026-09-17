@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-09-17T03:38:23+00:00",
-  "run_id": "run-20260917T032017-051fd34b",
+  "generated_at": "2026-09-17T04:41:20+00:00",
+  "run_id": "run-20260917T044118-6aa4395f",
   "variant": {
     "classification_mode": "text"
   },
@@ -47,10 +47,10 @@
     "skipped": {}
   },
   "cache": {
-    "cache_hits": 0,
-    "cache_misses": 2000,
-    "openrouter_api_calls": 2000,
-    "openrouter_http_attempts": 2000,
+    "cache_hits": 2000,
+    "cache_misses": 0,
+    "openrouter_api_calls": 0,
+    "openrouter_http_attempts": 0,
     "metric_cache": {
       "hits": 0,
       "misses": 0
@@ -107,7 +107,7 @@
     "enabled": true,
     "tripped": false,
     "reason": null,
-    "attempts": 2000,
+    "attempts": 0,
     "failures": 0,
     "failure_rate": 0.0,
     "consecutive_failures": 0,
@@ -124,7 +124,7 @@
     "by_failure_guard": 0,
     "by_budget": 0
   },
-  "log_path": "/home/joseph/jcworkspace/llm-summary-and-classification-benchmark/data/logs/benchmark-20260917T032016.log",
+  "log_path": "/home/joseph/jcworkspace/llm-summary-and-classification-benchmark/data/logs/benchmark-20260917T044117.log",
   "notes": [],
   "metrics": {
     "classification": {
@@ -196,7 +196,7 @@
   "reproducibility": {
     "benchmark_package_version": "1.0.0",
     "benchmark_version": "1.0.0",
-    "git_commit": "c12db6c91e7697f9dafc897de9c531e43921d60d",
+    "git_commit": "12ce0741fedd9b770a4593296378e383c3ca80b7",
     "git_dirty": true,
     "python_version": "3.12.3",
     "python_implementation": "CPython",
@@ -218,8 +218,8 @@
       "tenacity": "not-installed",
       "pyarrow": "25.0.1"
     },
-    "captured_at": "2026-09-17T03:20:17+00:00",
-    "executed_at": "2026-09-17T03:20:17+00:00",
+    "captured_at": "2026-09-17T04:41:18+00:00",
+    "executed_at": "2026-09-17T04:41:18+00:00",
     "api_provider": "openrouter",
     "model_id": "local/qwen2.5-1.5b-instruct-q8-gguf-pcd",
     "requested_model": "local/qwen2.5-1.5b-instruct-q8-gguf-pcd",

@@ -75,3 +75,47 @@ models:
       temperature: 0.0
       top_p: 1.0
       max_label_tokens: 32
+
+  - model_id: local/qwen3.5-2b-q8-gguf
+    display_name: Qwen3.5 2B (GGUF Q8_0, local)
+    vendor: qwen
+    provider: local
+    enabled: true
+    engine: llama_cpp_pcd
+    algorithm_version: "pcd-2"
+    source:
+      repo: unsloth/Qwen3.5-2B-GGUF
+      filename: Qwen3.5-2B-Q8_0.gguf
+      revision: f6d5376be1edb4d416d56da11e5397a961aca8ae
+    runtime:
+      n_ctx: 4096
+      n_threads: null
+      n_gpu_layers: 0
+      n_batch: 512
+      seed: 0
+      temperature: 0.0
+      top_p: 1.0
+      max_label_tokens: 32
+      n_seq_max: 32
+
+  - model_id: local/qwen3.5-4b-q4km-gguf
+    display_name: Qwen3.5 4B (GGUF Q4_K_M, local)
+    vendor: qwen
+    provider: local
+    enabled: true
+    engine: llama_cpp_pcd
+    algorithm_version: "pcd-2"
+    source:
+      repo: unsloth/Qwen3.5-4B-GGUF
+      filename: Qwen3.5-4B-Q4_K_M.gguf
+      revision: e87f176479d0855a907a41277aca2f8ee7a09523
+    runtime:
+      n_ctx: 4096
+      n_threads: null
+      n_gpu_layers: 0
+      n_batch: 512
+      seed: 0
+      temperature: 0.0
+      top_p: 1.0
+      max_label_tokens: 32
+      n_seq_max: 32

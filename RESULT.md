@@ -2,7 +2,7 @@
 
 <!-- 이 파일은 `benchmark report` 가 자동 생성합니다. 직접 수정하지 마세요. -->
 
-결과 기준: `2026-09-17T03:38:23+00:00` · benchmark version `1.0.0` · API provider: **OpenRouter**
+생성: `2026-09-17T04:06:41+00:00` · benchmark version `1.0.0` · API provider: **OpenRouter**
 
 같은 데이터를 담은 스프레드시트: [`results/benchmark_results.xlsx`](results/benchmark_results.xlsx)
 
@@ -50,7 +50,7 @@ OpenRouter 요청 1,300건입니다.
 | openai/gpt-5.4-nano | openrouter | $0.2000 | $1.2500 | 0.1304 | 0.1873 | 0.6149 | 0.2383 | 0.7150 | 0.6610 | 0.7180 | 1,106,945 | 75,745 | $0.316070 | $0.000000 |
 | mistralai/mistral-small-2603 | openrouter | $0.1500 | $0.6000 | 0.1487 | 0.2159 | 0.7248 | 0.6196 | 0.5090 | 0.7110 | 0.7000 | 1,107,916 | 62,923 | $0.196408 | $0.000000 |
 | mistralai/ministral-3b-2512 | openrouter | $0.1000 | $0.1000 | 0.1344 | 0.1977 | 0.6757 | 0.5592 | 0.4650 | 0.6060 | 0.6510 | 1,092,316 | 69,602 | $0.087519 | $0.000000 |
-| local/qwen2.5-1.5b-instruct-q8-gguf | local | — | — | — | — | — | — | 0.5750 | 0.4620 | 0.7130 | 1,441,986 | 10,903 | — | — |
+| local/qwen2.5-1.5b-instruct-q8-gguf | local | — | — | — | — | — | — | 0.5780 | 0.4620 | 0.7060 | 2,162,979 | 16,353 | — | — |
 | local/qwen2.5-1.5b-instruct-q8-gguf-pcd | local | — | — | — | — | — | — | 0.5720 | 0.4580 | 0.7240 | 1,441,986 | 0 | — | — |
 | openai/gpt-4.1-nano | openrouter | $0.1000 | $0.4000 | 0.1434 | 0.2195 | 0.7005 | 0.5422 | 0.5290 | 0.3980 | 0.7310 | 1,108,245 | 55,419 | $0.130275 | $0.000000 |
 
@@ -204,9 +204,9 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 | google/gemini-3.1-flash-lite | en | 1,000 | 0.8910 | 0.8763 | 0.0000 |
 | google/gemini-3.1-flash-lite | ko | 1,000 | 0.8700 | 0.8425 | 0.0000 |
 | google/gemini-3.1-flash-lite | overall | 2,000 | 0.8805 | 0.8565 | 0.0000 |
-| local/qwen2.5-1.5b-instruct-q8-gguf | en | 1,000 | 0.5750 | 0.5459 | 0.0000 |
-| local/qwen2.5-1.5b-instruct-q8-gguf | ko | 1,000 | 0.4620 | 0.4217 | 0.0000 |
-| local/qwen2.5-1.5b-instruct-q8-gguf | overall | 2,000 | 0.5185 | 0.4882 | 0.0000 |
+| local/qwen2.5-1.5b-instruct-q8-gguf | en | 1,000 | 0.5780 | 0.5486 | 0.0000 |
+| local/qwen2.5-1.5b-instruct-q8-gguf | ko | 1,000 | 0.4620 | 0.4226 | 0.0000 |
+| local/qwen2.5-1.5b-instruct-q8-gguf | overall | 2,000 | 0.5200 | 0.4912 | 0.0000 |
 | local/qwen2.5-1.5b-instruct-q8-gguf-pcd | en | 1,000 | 0.5720 | 0.5384 | 0.0000 |
 | local/qwen2.5-1.5b-instruct-q8-gguf-pcd | ko | 1,000 | 0.4580 | 0.4143 | 0.0000 |
 | local/qwen2.5-1.5b-instruct-q8-gguf-pcd | overall | 2,000 | 0.5150 | 0.4817 | 0.0000 |
@@ -269,7 +269,7 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 | deepseek/deepseek-v4-flash-0731 | 1,000 | 0.8510 | 0.7990 | 0.7280 | 0.0750 | 0.0740 | 0.1230 |
 | google/gemini-2.5-flash-lite | 1,000 | 0.8860 | 0.8520 | 0.7760 | 0.0670 | 0.0470 | 0.1100 |
 | google/gemini-3.1-flash-lite | 1,000 | 0.9330 | 0.9090 | 0.8470 | 0.0440 | 0.0230 | 0.0860 |
-| local/qwen2.5-1.5b-instruct-q8-gguf | 1,000 | 0.7130 | 0.5550 | 0.3750 | 0.2000 | 0.0870 | 0.3380 |
+| local/qwen2.5-1.5b-instruct-q8-gguf | 1,000 | 0.7060 | 0.5460 | 0.3730 | 0.2050 | 0.0890 | 0.3330 |
 | local/qwen2.5-1.5b-instruct-q8-gguf-pcd | 1,000 | 0.7240 | 0.5610 | 0.3770 | 0.1950 | 0.0810 | 0.3470 |
 | mistralai/ministral-14b-2512 | 1,000 | 0.8240 | 0.7680 | 0.6740 | 0.1060 | 0.0700 | 0.1500 |
 | mistralai/ministral-3b-2512 | 1,000 | 0.6510 | 0.4300 | 0.3610 | 0.1040 | 0.2450 | 0.2900 |
@@ -399,7 +399,7 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 | deepseek/deepseek-v4-flash-0731 | 1,300 | 1,190,712 | 369,477 | 63,519 | 0 | 1,254,231 | 1,300 | 0 |
 | google/gemini-2.5-flash-lite | 1,300 | 1,097,914 | 0 | 54,986 | 0 | 1,152,900 | 1,300 | 0 |
 | google/gemini-3.1-flash-lite | 1,300 | 1,098,022 | 0 | 55,664 | 0 | 1,153,686 | 1,217 | 83 |
-| local/qwen2.5-1.5b-instruct-q8-gguf | 4,000 | 1,441,986 | 0 | 10,903 | 0 | 1,452,889 | 0 | 2,000 |
+| local/qwen2.5-1.5b-instruct-q8-gguf | 6,000 | 2,162,979 | 0 | 16,353 | 0 | 2,179,332 | 2,000 | 0 |
 | local/qwen2.5-1.5b-instruct-q8-gguf-pcd | 4,000 | 1,441,986 | 0 | 0 | 0 | 1,441,986 | 2,000 | 0 |
 | mistralai/ministral-14b-2512 | 1,300 | 1,092,316 | 295,936 | 71,944 | 0 | 1,164,260 | 1,300 | 0 |
 | mistralai/ministral-3b-2512 | 1,300 | 1,092,316 | 318,592 | 69,602 | 0 | 1,161,918 | 1,300 | 0 |
@@ -494,7 +494,7 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 | deepseek/deepseek-v4-flash-0731 | COMPLETED | 2026-09-16T03:43:34+00:00 | 1.0.0 | — | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 | google/gemini-2.5-flash-lite | COMPLETED | 2026-09-16T03:05:29+00:00 | 1.0.0 | — | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 | google/gemini-3.1-flash-lite | COMPLETED | 2026-09-16T03:02:45+00:00 | 1.0.0 | — | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
-| local/qwen2.5-1.5b-instruct-q8-gguf | COMPLETED | 2026-09-17T03:02:40+00:00 | 1.0.0 | 62bd51cc58af | 2,000 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
+| local/qwen2.5-1.5b-instruct-q8-gguf | COMPLETED | 2026-09-17T03:38:25+00:00 | 1.0.0 | c12db6c91e76 | 2,000 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 | local/qwen2.5-1.5b-instruct-q8-gguf-pcd | COMPLETED | 2026-09-17T03:20:17+00:00 | 1.0.0 | c12db6c91e76 | 2,000 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 | mistralai/ministral-14b-2512 | COMPLETED | 2026-09-16T03:10:43+00:00 | 1.0.0 | — | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 | mistralai/ministral-3b-2512 | COMPLETED | 2026-09-16T03:17:57+00:00 | 1.0.0 | — | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |

@@ -491,3 +491,50 @@ def test_workbook_legend_sheet_explains_the_columns(results):
     assert rouge[2] == "↑"
     # Every legended sheet actually exists in the workbook.
     assert by_sheet <= set(workbook.sheetnames)
+
+
+# --------------------------------------------------------------------------- #
+# deterministic output
+# --------------------------------------------------------------------------- #
+def test_regenerating_reports_is_byte_identical(results):
+    """Otherwise the results workflow commits a new timestamp on every run."""
+    import time
+
+    first = generate_reports(results).paths
+    snapshot = {name: path.read_bytes() for name, path in first.items()}
+    time.sleep(1.1)
+    second = generate_reports(results).paths
+
+    for name, path in second.items():
+        assert path.read_bytes() == snapshot[name], f"{name} is not reproducible"
+
+
+def test_reports_are_stamped_with_the_results_not_the_clock(results):
+    document = generate_reports(results).paths["result_md"].read_text(encoding="utf-8")
+    # Every fixture summary carries this generated_at.
+    assert "2026-01-01T00:00:00+00:00" in document
+    assert "결과 기준" in document
+
+
+def test_a_new_result_does_change_the_reports(results):
+    before = generate_reports(results).paths["result_md"].read_bytes()
+
+    summary = _summary("qwen/qwen3.8-flash")
+    summary["generated_at"] = "2027-05-05T00:00:00+00:00"
+    _write(results, [summary])
+
+    after = generate_reports(results).paths["result_md"].read_bytes()
+    assert after != before
+    assert b"2027-05-05" in after
+
+
+def test_workbook_metadata_is_not_wall_clock(results):
+    import zipfile
+
+    path = generate_reports(results).paths["excel"]
+    with zipfile.ZipFile(path) as archive:
+        core = archive.read("docProps/core.xml").decode("utf-8")
+        stamps = {info.date_time for info in archive.infolist()}
+
+    assert "2026-01-01T00:00:00+00:00" in core
+    assert len(stamps) == 1, "zip entry timestamps must be fixed, not the clock"

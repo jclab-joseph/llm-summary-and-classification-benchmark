@@ -12,7 +12,7 @@ from typing import Any, Callable, Sequence
 
 from llmbench.config.loader import AppConfig
 from llmbench.core.reproducibility import utc_now_iso
-from llmbench.reporting.tables import build_tables
+from llmbench.reporting.tables import build_tables, results_timestamp
 from llmbench.version import BENCHMARK_VERSION
 
 __all__ = ["write_result_markdown", "render_result_markdown"]
@@ -404,7 +404,7 @@ def render_result_markdown(
     all_summaries: Sequence[dict[str, Any]] | None = None,
 ) -> str:
     tables = build_tables(leaderboard, summaries, all_summaries=all_summaries)
-    generated = utc_now_iso()
+    generated = results_timestamp(summaries)
 
     def rel(path: Path | None) -> str:
         if path is None:
@@ -421,7 +421,7 @@ def render_result_markdown(
         "",
         "<!-- 이 파일은 `benchmark report` 가 자동 생성합니다. 직접 수정하지 마세요. -->",
         "",
-        f"생성: `{generated}` · benchmark version `{BENCHMARK_VERSION}` · API provider: **OpenRouter**",
+        f"결과 기준: `{generated}` · benchmark version `{BENCHMARK_VERSION}` · API provider: **OpenRouter**",
         "",
         f"같은 데이터를 담은 스프레드시트: [`{rel(excel_path)}`]({rel(excel_path)})",
         "",

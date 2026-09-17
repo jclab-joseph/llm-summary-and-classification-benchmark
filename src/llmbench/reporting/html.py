@@ -10,6 +10,7 @@ from typing import Any
 from llmbench.config.loader import AppConfig
 from llmbench.core.reproducibility import utc_now_iso
 from llmbench.reporting.leaderboard import LEADERBOARD_COLUMNS, model_detail_rows
+from llmbench.reporting.tables import results_timestamp
 
 __all__ = ["render_html_report"]
 
@@ -239,7 +240,7 @@ def render_html_report(cfg: AppConfig, rows: list[dict[str, Any]], summaries: li
 <body>
 <main>
 <h1>LLM Summarization / Hallucination / Classification Benchmark</h1>
-<p class="sub">Generated {html.escape(utc_now_iso())} &middot; every model called through OpenRouter</p>
+<p class="sub">Results as of {html.escape(results_timestamp(summaries))} &middot; every model called through OpenRouter</p>
 
 <div class="note">
 Costs shown are the authoritative <code>usage.cost</code> values returned by OpenRouter.

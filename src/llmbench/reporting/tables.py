@@ -8,8 +8,11 @@ from __future__ import annotations
 
 from typing import Any, Sequence
 
+from llmbench.core.reproducibility import utc_now_iso
+
 __all__ = [
     "TABLES",
+    "results_timestamp",
     "build_tables",
     "leaderboard_rows",
     "summarization_rows",
@@ -34,6 +37,18 @@ def _get(data: Any, *path: str, default: Any = None) -> Any:
             return default
         node = node[key]
     return node
+
+
+def results_timestamp(summaries: Sequence[dict[str, Any]]) -> str:
+    """Newest result timestamp, not the moment the file was written.
+
+    A wall-clock "generated at" makes every regeneration a diff, so the results
+    workflow would commit a timestamp change on every run. Stamping the data
+    instead makes report generation deterministic: same results, same bytes.
+    """
+    stamps = [str(s.get("generated_at") or "") for s in summaries]
+    stamps = [s for s in stamps if s]
+    return max(stamps) if stamps else utc_now_iso()
 
 
 def _model_id(summary: dict[str, Any]) -> str:

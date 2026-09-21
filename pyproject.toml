@@ -39,6 +39,12 @@ bertscore = [
 local = [
     "llama-cpp-python>=0.3.2",
 ]
+# Laya, a non-autoregressive decision model, as a local classification backend.
+# Pulls in torch + transformers; the CPU wheels are enough:
+#   uv sync --extra laya --index-url https://download.pytorch.org/whl/cpu
+laya = [
+    "laya>=0.3.4",
+]
 # Only needed if you want to re-derive datasets through the HuggingFace `datasets`
 # library instead of the built-in pinned-revision downloader.
 hf = [

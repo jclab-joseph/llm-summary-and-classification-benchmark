@@ -2,7 +2,7 @@
 
 <!-- 이 파일은 `benchmark report` 가 자동 생성합니다. 직접 수정하지 마세요. -->
 
-결과 기준: `2026-09-17T08:13:45+00:00` · benchmark version `1.0.0` · API provider: **OpenRouter**
+결과 기준: `2026-09-21T00:15:42+00:00` · benchmark version `1.0.0` · API provider: **OpenRouter**
 
 같은 데이터를 담은 스프레드시트: [`results/benchmark_results.xlsx`](results/benchmark_results.xlsx)
 
@@ -55,6 +55,7 @@ OpenRouter 요청 1,300건입니다.
 | local/qwen2.5-1.5b-instruct-q8-gguf | local | — | — | — | — | — | — | 0.5780 | 0.4620 | 0.7060 | 2,162,979 | 16,353 | — | — |
 | local/qwen2.5-1.5b-instruct-q8-gguf-pcd | local | — | — | — | — | — | — | 0.5720 | 0.4580 | 0.7240 | 1,441,986 | 0 | — | — |
 | openai/gpt-4.1-nano | openrouter | $0.1000 | $0.4000 | 0.1434 | 0.2195 | 0.7005 | 0.5422 | 0.5290 | 0.3980 | 0.7310 | 1,108,245 | 55,419 | $0.130275 | $0.000000 |
+| local/laya-multilingual | local | — | — | — | — | — | — | 0.3980 | 0.3020 | 0.7940 | 544,388 | 0 | — | — |
 
 <details><summary>지표 설명</summary>
 
@@ -206,6 +207,9 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 | google/gemini-3.1-flash-lite | en | 1,000 | 0.8910 | 0.8763 | 0.0000 |
 | google/gemini-3.1-flash-lite | ko | 1,000 | 0.8700 | 0.8425 | 0.0000 |
 | google/gemini-3.1-flash-lite | overall | 2,000 | 0.8805 | 0.8565 | 0.0000 |
+| local/laya-multilingual | en | 1,000 | 0.3980 | 0.3313 | 0.0000 |
+| local/laya-multilingual | ko | 1,000 | 0.3020 | 0.2509 | 0.0000 |
+| local/laya-multilingual | overall | 2,000 | 0.3500 | 0.2940 | 0.0000 |
 | local/qwen2.5-1.5b-instruct-q8-gguf | en | 1,000 | 0.5780 | 0.5486 | 0.0000 |
 | local/qwen2.5-1.5b-instruct-q8-gguf | ko | 1,000 | 0.4620 | 0.4226 | 0.0000 |
 | local/qwen2.5-1.5b-instruct-q8-gguf | overall | 2,000 | 0.5200 | 0.4912 | 0.0000 |
@@ -277,6 +281,7 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 | deepseek/deepseek-v4-flash-0731 | 1,000 | 0.8510 | 0.7990 | 0.7280 | 0.0750 | 0.0740 | 0.1230 |
 | google/gemini-2.5-flash-lite | 1,000 | 0.8860 | 0.8520 | 0.7760 | 0.0670 | 0.0470 | 0.1100 |
 | google/gemini-3.1-flash-lite | 1,000 | 0.9330 | 0.9090 | 0.8470 | 0.0440 | 0.0230 | 0.0860 |
+| local/laya-multilingual | 1,000 | 0.7940 | 0.4230 | 0.2470 | 0.1510 | 0.0550 | 0.5470 |
 | local/qwen2.5-1.5b-instruct-q8-gguf | 1,000 | 0.7060 | 0.5460 | 0.3730 | 0.2050 | 0.0890 | 0.3330 |
 | local/qwen2.5-1.5b-instruct-q8-gguf-pcd | 1,000 | 0.7240 | 0.5610 | 0.3770 | 0.1950 | 0.0810 | 0.3470 |
 | local/qwen3.5-2b-q8-gguf | 1,000 | 0.7050 | 0.5590 | 0.4350 | 0.2130 | 0.0820 | 0.2700 |
@@ -371,6 +376,7 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 | deepseek/deepseek-v4-flash-0731 | $0.034536 | $0.047342 | $0.005821 | $0.000000 | $0.000000 | $0.087699 | $0.087699 | $0.000000 |
 | google/gemini-2.5-flash-lite | $0.050151 | $0.068645 | $0.012990 | $0.000000 | $0.000000 | $0.131786 | $0.131786 | $0.000000 |
 | google/gemini-3.1-flash-lite | $0.146253 | $0.172943 | $0.038805 | $0.000000 | $0.000000 | $0.358001 | $0.333413 | $0.024588 |
+| local/laya-multilingual | — | — | — | — | — | — | — | — |
 | local/qwen2.5-1.5b-instruct-q8-gguf | — | — | — | — | — | — | — | — |
 | local/qwen2.5-1.5b-instruct-q8-gguf-pcd | — | — | — | — | — | — | — | — |
 | local/qwen3.5-2b-q8-gguf | — | — | — | — | — | — | — | — |
@@ -411,6 +417,7 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 | deepseek/deepseek-v4-flash-0731 | 1,300 | 1,190,712 | 369,477 | 63,519 | 0 | 1,254,231 | 1,300 | 0 |
 | google/gemini-2.5-flash-lite | 1,300 | 1,097,914 | 0 | 54,986 | 0 | 1,152,900 | 1,300 | 0 |
 | google/gemini-3.1-flash-lite | 1,300 | 1,098,022 | 0 | 55,664 | 0 | 1,153,686 | 1,217 | 83 |
+| local/laya-multilingual | 2,000 | 544,388 | 0 | 0 | 0 | 544,388 | 2,000 | 0 |
 | local/qwen2.5-1.5b-instruct-q8-gguf | 6,000 | 2,162,979 | 0 | 16,353 | 0 | 2,179,332 | 0 | 2,000 |
 | local/qwen2.5-1.5b-instruct-q8-gguf-pcd | 4,000 | 1,441,986 | 0 | 0 | 0 | 1,441,986 | 0 | 2,000 |
 | local/qwen3.5-2b-q8-gguf | 2,000 | 721,898 | 0 | 0 | 0 | 721,898 | 2,000 | 0 |
@@ -508,6 +515,7 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 | deepseek/deepseek-v4-flash-0731 | COMPLETED | 2026-09-16T03:43:34+00:00 | 1.0.0 | — | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 | google/gemini-2.5-flash-lite | COMPLETED | 2026-09-16T03:05:29+00:00 | 1.0.0 | — | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 | google/gemini-3.1-flash-lite | COMPLETED | 2026-09-16T03:02:45+00:00 | 1.0.0 | — | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
+| local/laya-multilingual | COMPLETED | 2026-09-21T00:06:02+00:00 | 1.0.0 | ad6a92fc3526 | 2,000 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 | local/qwen2.5-1.5b-instruct-q8-gguf | COMPLETED | 2026-09-17T04:41:22+00:00 | 1.0.0 | 12ce0741fedd | 2,000 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 | local/qwen2.5-1.5b-instruct-q8-gguf-pcd | COMPLETED | 2026-09-17T04:41:18+00:00 | 1.0.0 | 12ce0741fedd | 2,000 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 | local/qwen3.5-2b-q8-gguf | COMPLETED | 2026-09-17T04:41:25+00:00 | 1.0.0 | 12ce0741fedd | 2,000 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |

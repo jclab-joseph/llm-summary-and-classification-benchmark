@@ -297,7 +297,8 @@ class LocalSource(StrictModel):
     """Where the weights come from. Pinned like every other dataset artifact."""
 
     repo: str
-    filename: str
+    # A single GGUF file, or None when the engine loads the whole repo itself.
+    filename: str | None = None
     revision: str
 
 
@@ -310,6 +311,9 @@ class LocalRuntime(StrictModel):
     temperature: float = 0.0
     top_p: float = 1.0
     max_label_tokens: int = 32
+    # Non-llama.cpp engines: where to run, and the question id they answer under.
+    device: str | None = None
+    question_id: str = "intent"
     # KV sequences available for broadcasting tree branches. It bounds throughput
     # only: running out is an error, never a silently truncated search.
     n_seq_max: int = 32
@@ -324,6 +328,7 @@ class LocalRuntime(StrictModel):
             "temperature": self.temperature,
             "top_p": self.top_p,
             "max_label_tokens": self.max_label_tokens,
+            "question_id": self.question_id,
         }
 
 
@@ -332,6 +337,10 @@ class LocalModelConfig(ModelConfig):
 
     provider: Literal["local"] = "local"
     engine: str = "llama_cpp"
+    # How the question reaches the model. `chat` renders a chat prompt for a
+    # causal LM; `state` hands over the raw utterance plus the instruction, which
+    # is the only shape a non-generative decision model accepts.
+    prompt_style: Literal["chat", "state"] = "chat"
     # Version of the decoding algorithm itself. Bumping it re-runs the benchmark
     # rather than pooling answers produced by two different implementations.
     algorithm_version: str = "1"
@@ -343,6 +352,7 @@ class LocalModelConfig(ModelConfig):
         return {
             "engine": self.engine,
             "algorithm_version": self.algorithm_version,
+            "prompt_style": self.prompt_style,
             "repo": self.source.repo,
             "filename": self.source.filename,
             "revision": self.source.revision,

@@ -136,7 +136,7 @@ text 점수가 분류 실력이 아니라 형식 준수 실패에 발목 잡혀 
 `config/local_models.yaml` 에 따로 있고, `config/models.yaml` 은 OpenRouter 전용으로 남습니다.
 
 ```bash
-# CPU 휠
+# GGUF 엔진 (llama.cpp) — CPU 휠
 uv sync --extra local --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
 # 또는 CUDA 휠 (툴킷 버전에 맞는 태그 선택)
 uv sync --extra local --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu122
@@ -198,6 +198,7 @@ VRAM 이 부족하면 llama.cpp 는 **조용히 CPU 로 내려가지 않고 프�
 | `local/qwen2.5-1.5b-instruct-q8-gguf` | 같은 가중치 | GBNF (구현 교차 검증용) |
 | `local/qwen3.5-2b-q8-gguf` | Qwen3.5 2B Q8_0 (`unsloth`) | PCD |
 | `local/qwen3.5-4b-q4km-gguf` | Qwen3.5 4B Q4_K_M (`unsloth`) | PCD |
+| `local/laya-multilingual` | Laya Multilingual (mmBERT-base) | `laya` — [별도 절](#laya-생성하지-않는-결정-모델) |
 
 둘 다 파싱 불가능한 답이 구조적으로 나올 수 없습니다. 호스팅 `json_schema` 가 제공자에게
 사서 쓰는 보장을 로컬에서 직접 수행하는 것입니다.
@@ -244,6 +245,33 @@ assistant 차례에 `<think>\n\n</think>\n\n` 이 붙습니다(비-thinking 모�
 
 실측에서 발화당 **디코딩 2.71회로 분기 7.31개**를 평가합니다(그중 1회는 prefill). 브로드캐스트
 없이 분기를 순차로 돌면 같은 작업에 forward 가 그만큼 더 듭니다.
+
+#### Laya 생성하지 않는 결정 모델
+
+[`convaiinnovations/laya-multilingual`](https://huggingface.co/convaiinnovations/laya-multilingual)
+은 causal LM 이 아닙니다. mmBERT-base 인코더에 decision head 를 얹어, **각 선택지를 자기
+`[MASK]` 토큰에서 점수화하고 그 질문의 선택지들에 대해 softmax** 합니다. 한 번의 forward pass 로
+답과 확률이 나오고, **생성이 없으므로 파싱할 것도 없습니다.**
+
+제약 디코딩과 같은 보장을 다른 방식으로 얻는 셈입니다. 다만 요청의 **모양**이 다릅니다 —
+채팅 프롬프트가 아니라 *state* 와 *typed question* 을 받으므로 `prompt_style: state` 로
+설정합니다. 라벨 목록은 프롬프트에 들어가지 않고 질문의 선택지로 따로 전달됩니다.
+
+```bash
+uv sync --extra laya --index-url https://download.pytorch.org/whl/cpu
+benchmark run --model local/laya-multilingual --benchmark classification
+```
+
+> **점수를 읽을 때 반드시 같이 보셔야 할 것.** 모델 카드는 `choice` 질문의 선택지를
+> **약 20개 이하**로 유지하라고 명시합니다. 선택지들이 고정된 256토큰 head 예산을 나눠 쓰기
+> 때문에, 라벨 공간이 커지면 라벨당 토큰이 몇 개 남지 않아 정확도가 급격히 떨어집니다.
+> 이 벤치마크는 **60개 인텐트** 중 하나를 묻습니다 — 문서화된 한계의 3배입니다.
+>
+> 따라서 여기 나오는 숫자는 **지원 범위 밖**이며, 이 모델이 설계된 크기에서 내는 성능을
+> 과소평가합니다. 참고로 카드가 보고하는 20개 선택지 기준 한국어 MASSIVE 정확도는 0.490,
+> 이 벤치마크의 60개 선택지 기준은 0.302 입니다.
+>
+> 라벨 공간을 줄이면 비교가 깨지므로(다른 모델은 60개를 받습니다) 줄이지 않았습니다.
 
 #### 실측 (CPU, 발화 120건, 60개 인텐트)
 

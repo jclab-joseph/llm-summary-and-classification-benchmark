@@ -23,6 +23,7 @@ from llmbench.prompts.registry import (
     classification_json_schema,
     classification_prompt,
     classification_single_prompt,
+    classification_state_prompt,
 )
 
 __all__ = ["build_classification_tasks", "score_classification", "batch_records", "label_space_of"]
@@ -99,7 +100,11 @@ def build_classification_tasks(
             # local engine has none to save. The label list stays in the system
             # message so the engine reuses one prefill across the whole run.
             for record in records:
-                prompt = classification_single_prompt(language, record.payload["text"], labels)
+                prompt = (
+                    classification_state_prompt(language, record.payload["text"])
+                    if model.prompt_style == "state"
+                    else classification_single_prompt(language, record.payload["text"], labels)
+                )
                 tasks.append(
                     make_task(
                         cfg=cfg,

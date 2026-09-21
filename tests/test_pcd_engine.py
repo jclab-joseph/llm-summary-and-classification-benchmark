@@ -258,8 +258,9 @@ def test_both_decoders_are_registered():
 
 
 def test_config_ships_both_decoders(prepared):
+    """Both llama.cpp decoders ship, over the same weights, so they can be compared."""
     engines = {m.engine for m in prepared.local_models.models}
-    assert engines == {"llama_cpp", "llama_cpp_pcd"}
+    assert {"llama_cpp", "llama_cpp_pcd"} <= engines
 
 
 def test_the_two_decoders_do_not_share_cache_keys(prepared):
@@ -270,9 +271,9 @@ def test_the_two_decoders_do_not_share_cache_keys(prepared):
     manifest = read_manifest(prepared.manifest_dir / prepared.benchmark.benchmarks.classification.manifest)
     by_engine = {}
     for model in prepared.local_models.models:
-        by_engine[model.engine] = {
+        by_engine.setdefault(model.engine, set()).update(
             t.cache_key for t in build_classification_tasks(prepared, model, manifest).tasks
-        }
+        )
     assert by_engine["llama_cpp"].isdisjoint(by_engine["llama_cpp_pcd"])
 
 

@@ -121,3 +121,29 @@ models:
       top_p: 1.0
       max_label_tokens: 32
       n_seq_max: 32
+
+  # Not a causal LM: an mmBERT encoder with a decision head that scores every
+  # option at its own [MASK] token in one forward pass. Nothing is generated, so
+  # there is nothing to parse -- the same guarantee the constrained decoders give,
+  # reached a different way.
+  #
+  # NOTE ON ITS SCORE: the model card documents a ceiling of ~20 options for a
+  # `choice` question, because options share a fixed 256-token head budget. This
+  # benchmark asks for one of 60 intents, so the number is outside the supported
+  # envelope and understates the model at the size it was built for.
+  - model_id: local/laya-multilingual
+    display_name: Laya Multilingual (mmBERT-base decision head, local)
+    vendor: convaiinnovations
+    provider: local
+    enabled: true
+    engine: laya
+    prompt_style: state
+    algorithm_version: "laya-1"
+    source:
+      repo: convaiinnovations/laya-multilingual
+      # The engine loads the whole checkpoint through huggingface_hub.
+      filename: null
+      revision: 052592a15d198d9ad47da779604259b10b47b7aa
+    runtime:
+      # null lets laya choose; set "cpu" or "cuda" to pin it.
+      device: null

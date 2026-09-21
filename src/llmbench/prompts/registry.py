@@ -21,6 +21,7 @@ __all__ = [
     "hallucination_prompt",
     "classification_prompt",
     "classification_single_prompt",
+    "classification_state_prompt",
     "classification_json_schema",
     "judge_prompt",
 ]
@@ -35,6 +36,9 @@ PROMPT_VERSIONS = {
     # One utterance per prompt, answer constrained to the label set by the
     # decoder itself. Used by local engines.
     "classification_single": "cls-single-1",
+    # Instruction + raw utterance, for models that take a state and typed
+    # questions rather than a chat prompt.
+    "classification_state": "cls-state-1",
     "judge": "judge-1",
 }
 
@@ -290,6 +294,27 @@ def classification_single_prompt(
         system=_CLS_SINGLE_SYSTEM[lang].format(labels=labels),
         user=_CLS_SINGLE_USER[lang].format(text=text),
         template_version=PROMPT_VERSIONS["classification_single"],
+    )
+
+
+_CLS_STATE_INSTRUCTIONS = {
+    "en": "Which intent does the user utterance express?",
+    "ko": "사용자 발화가 나타내는 인텐트는 무엇인가?",
+}
+
+
+def classification_state_prompt(language: str, text: str) -> RenderedPrompt:
+    """Instruction plus the bare utterance.
+
+    A non-generative decision model takes a state and a typed question, not a
+    chat transcript. Its label set travels separately as the question's options,
+    so it never appears in the prompt text.
+    """
+    lang = language if language in _CLS_STATE_INSTRUCTIONS else "en"
+    return RenderedPrompt(
+        system=_CLS_STATE_INSTRUCTIONS[lang],
+        user=text,
+        template_version=PROMPT_VERSIONS["classification_state"],
     )
 
 

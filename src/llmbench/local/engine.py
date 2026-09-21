@@ -45,6 +45,8 @@ ENGINES: dict[str, str] = {
     "llama_cpp": "llmbench.local.llama_cpp_engine:LlamaCppEngine",
     # Parallel constrained decoding: the answer is read out of the logits.
     "llama_cpp_pcd": "llmbench.local.pcd_engine:ParallelConstrainedEngine",
+    # A non-autoregressive decision model: not a causal LM at all.
+    "laya": "llmbench.local.laya_engine:LayaEngine",
 }
 
 

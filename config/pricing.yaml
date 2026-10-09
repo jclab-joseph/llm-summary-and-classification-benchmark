@@ -18,6 +18,16 @@ constraints:
   max_output_per_million: 1.50
 
 models:
+  openai/gpt-6-luna:
+    input_per_million: 0.10
+    output_per_million: 0.50
+    cached_input_per_million: 0.01
+
+  anthropic/claude-haiku-5.5:
+    input_per_million: 0.10
+    output_per_million: 0.50
+    cached_input_per_million: 0.01
+
   openai/gpt-5.6-luna:
     input_per_million: 0.20
     output_per_million: 1.20

@@ -176,6 +176,11 @@ class ModelConfig(StrictModel):
     # rejects anything but `openrouter`, so the hosted benchmark keeps its single
     # provider invariant.
     provider: Literal["openrouter", "local"] = "openrouter"
+    # Which OpenRouter API serves the model. `chat` is /chat/completions. A
+    # `decisions` model generates no text: it takes a state and typed questions
+    # at /alpha/decisions and returns a probability per fixed option, so it can
+    # answer the two closed-label benchmarks but not summarization.
+    api: Literal["chat", "decisions"] = "chat"
     model_id: str
     display_name: str
     vendor: str

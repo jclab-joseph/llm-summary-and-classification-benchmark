@@ -15,7 +15,7 @@ from llmbench.metrics.hallucination import (
     hallucination_scores,
     parse_hallucination_label,
 )
-from llmbench.prompts.registry import hallucination_prompt
+from llmbench.prompts.registry import hallucination_decision, hallucination_prompt
 
 __all__ = ["build_hallucination_tasks", "score_hallucination"]
 
@@ -42,11 +42,19 @@ def build_hallucination_tasks(
             skipped[language] = "SKIPPED"
             continue
         for record in manifest.records:
-            prompt = hallucination_prompt(
-                record.language,
-                record.payload["source"],
-                record.payload["candidate_summary"],
-            )
+            decision = None
+            if model.api == "decisions":
+                prompt, decision = hallucination_decision(
+                    record.language,
+                    record.payload["source"],
+                    record.payload["candidate_summary"],
+                )
+            else:
+                prompt = hallucination_prompt(
+                    record.language,
+                    record.payload["source"],
+                    record.payload["candidate_summary"],
+                )
             tasks.append(
                 make_task(
                     cfg=cfg,
@@ -67,6 +75,7 @@ def build_hallucination_tasks(
                     ),
                     prompt=prompt,
                     answer_tokens=answer_tokens,
+                    decision=decision,
                     alias_resolution=alias_resolution,
                     meta={"gold_label": record.payload["gold_label"]},
                 )

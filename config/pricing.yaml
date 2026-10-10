@@ -18,6 +18,12 @@ constraints:
   max_output_per_million: 1.50
 
 models:
+  # Billed on input only; a decision costs no output tokens.
+  microsoft/microsoft-decision-1:
+    input_per_million: 0.042
+    output_per_million: 0.0
+    cached_input_per_million: null
+
   openai/gpt-6-luna:
     input_per_million: 0.10
     output_per_million: 0.50

@@ -29,6 +29,8 @@ from llmbench.openrouter.types import (
 __all__ = ["OpenRouterClient", "DEFAULT_BASE_URL"]
 
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
+# The Decisions API lives beside v1, not under it.
+DECISIONS_PATH = "/alpha/decisions"
 
 log = get_logger("openrouter")
 
@@ -76,6 +78,8 @@ class OpenRouterClient:
     ) -> None:
         self.api_key = api_key if api_key is not None else os.environ.get("OPENROUTER_API_KEY", "")
         self.base_url = base_url.rstrip("/")
+        api_root = self.base_url[: -len("/v1")] if self.base_url.endswith("/v1") else self.base_url
+        self.decisions_url = api_root + DECISIONS_PATH
         self.timeout = timeout
         self.max_attempts = max(1, int(max_attempts))
         self.initial_backoff = initial_backoff
@@ -145,8 +149,11 @@ class OpenRouterClient:
         if not isinstance(cost_details, dict):
             cost_details = {}
 
-        prompt_tokens = _to_int(usage_raw.get("prompt_tokens"))
-        completion_tokens = _to_int(usage_raw.get("completion_tokens"))
+        # The Decisions API reports `input_tokens` / `output_tokens` instead.
+        prompt_tokens = _to_int(usage_raw.get("prompt_tokens", usage_raw.get("input_tokens")))
+        completion_tokens = _to_int(
+            usage_raw.get("completion_tokens", usage_raw.get("output_tokens"))
+        )
         total = _to_int(usage_raw.get("total_tokens")) or (prompt_tokens + completion_tokens)
 
         return Usage(
@@ -170,6 +177,13 @@ class OpenRouterClient:
 
     @staticmethod
     def _extract_text(raw: dict[str, Any]) -> tuple[str, str | None]:
+        answers = raw.get("answers")
+        if isinstance(answers, dict):
+            # A Decisions API reply: the chosen option *is* the answer. Every
+            # request asks exactly one question, so there is one answer to read.
+            answer = next(iter(answers.values()), None) if len(answers) == 1 else None
+            choice = answer.get("choice") if isinstance(answer, dict) else None
+            return (str(choice) if choice is not None else ""), "decision"
         choices = raw.get("choices") or []
         if not choices:
             return "", None
@@ -263,6 +277,7 @@ class OpenRouterClient:
             )
 
         payload = request.to_payload()
+        url = self.decisions_url if request.decision is not None else "/chat/completions"
         records: list[AttemptRecord] = []
         last: GenerationResponse | None = None
 
@@ -270,7 +285,7 @@ class OpenRouterClient:
             started = time.perf_counter()
             retry_after: float | None = None
             try:
-                http_response = await self.client.post("/chat/completions", json=payload)
+                http_response = await self.client.post(url, json=payload)
             except (httpx.TimeoutException, httpx.TransportError) as exc:
                 latency_ms = int((time.perf_counter() - started) * 1000)
                 log.warning(
@@ -449,7 +464,9 @@ class OpenRouterClient:
         from llmbench.core.reproducibility import utc_now_iso
 
         retrieved_at = utc_now_iso()
-        response = await self.client.get("/models")
+        # Without this filter /models lists text-output models only, and a
+        # decision model (output modality `decisions`) would look unlisted.
+        response = await self.client.get("/models", params={"output_modalities": "all"})
         response.raise_for_status()
         body = response.json()
         entries = body.get("data") or []

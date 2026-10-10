@@ -2,7 +2,7 @@
 
 <!-- 이 파일은 `benchmark report` 가 자동 생성합니다. 직접 수정하지 마세요. -->
 
-결과 기준: `2026-10-09T22:57:20+00:00` · benchmark version `1.0.0` · API provider: **OpenRouter**
+결과 기준: `2026-10-10T15:03:33+00:00` · benchmark version `1.0.0` · API provider: **OpenRouter**
 
 같은 데이터를 담은 스프레드시트: [`results/benchmark_results.xlsx`](results/benchmark_results.xlsx)
 
@@ -36,6 +36,7 @@ OpenRouter 요청 1,300건입니다.
 
 | Model | API | Input $/M | Output $/M | Summary EN | Summary KO | Halu EN F1 | Halu KO F1 | Cls EN | Cls KO | EN-KO | Input Tokens | Output Tokens | OpenRouter Cost | Judge Cost |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| microsoft/microsoft-decision-1 | openrouter | $0.0420 | $0.0000 | — | — | 0.7463 | 0.5652 | 0.9200 | 0.8870 | 0.9270 | 1,626,549 | 2,800 | $0.068315 | $0.000000 |
 | google/gemini-3.1-flash-lite | openrouter | $0.2500 | $1.5000 | 0.1800 | 0.2210 | 0.7183 | 0.6113 | 0.8910 | 0.8700 | 0.9330 | 1,098,022 | 55,664 | $0.358001 | $0.000000 |
 | qwen/qwen3.8-flash | openrouter | $0.1500 | $0.4700 | 0.1621 | 0.2284 | 0.7597 | 0.5623 | 0.8820 | 0.8460 | 0.9100 | 1,061,596 | 52,179 | $0.147926 | $0.000000 |
 | openai/gpt-6-luna | openrouter | $0.1000 | $0.5000 | 0.1527 | 0.2172 | 0.7273 | 0.6174 | 0.8630 | 0.8390 | 0.9020 | 1,106,945 | 59,964 | $0.110488 | $0.000000 |
@@ -151,6 +152,8 @@ XL-Sum(BBC 뉴스)의 기사를 1~3문장으로 요약시키고, 기사에 딸�
 | google/gemini-2.5-flash-lite | ko | OK | 400 | 0.6675 | 0.6533 | 0.7815 | 0.4650 | 0.5831 | 0.8700 | 0.0000 |
 | google/gemini-3.1-flash-lite | en | OK | 400 | 0.7275 | 0.7272 | 0.7433 | 0.6950 | 0.7183 | 0.7600 | 0.0000 |
 | google/gemini-3.1-flash-lite | ko | OK | 400 | 0.6725 | 0.6642 | 0.7518 | 0.5150 | 0.6113 | 0.8300 | 0.0000 |
+| microsoft/microsoft-decision-1 | en | OK | 400 | 0.7400 | 0.7398 | 0.7286 | 0.7650 | 0.7463 | 0.7150 | 0.0000 |
+| microsoft/microsoft-decision-1 | ko | OK | 400 | 0.6500 | 0.6362 | 0.7459 | 0.4550 | 0.5652 | 0.8450 | 0.0000 |
 | mistralai/ministral-14b-2512 | en | OK | 400 | 0.7050 | 0.7045 | 0.6898 | 0.7450 | 0.7163 | 0.6650 | 0.0000 |
 | mistralai/ministral-14b-2512 | ko | OK | 400 | 0.6825 | 0.6825 | 0.6816 | 0.6850 | 0.6833 | 0.6800 | 0.0000 |
 | mistralai/ministral-3b-2512 | en | OK | 400 | 0.7025 | 0.7005 | 0.7425 | 0.6200 | 0.6757 | 0.7850 | 0.0000 |
@@ -235,6 +238,9 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 | local/qwen3.5-4b-q4km-gguf | en | 1,000 | 0.8000 | 0.7785 | 0.0000 |
 | local/qwen3.5-4b-q4km-gguf | ko | 1,000 | 0.7490 | 0.7246 | 0.0000 |
 | local/qwen3.5-4b-q4km-gguf | overall | 2,000 | 0.7745 | 0.7528 | 0.0000 |
+| microsoft/microsoft-decision-1 | en | 1,000 | 0.9200 | 0.9079 | 0.0000 |
+| microsoft/microsoft-decision-1 | ko | 1,000 | 0.8870 | 0.8759 | 0.0000 |
+| microsoft/microsoft-decision-1 | overall | 2,000 | 0.9035 | 0.8920 | 0.0000 |
 | mistralai/ministral-14b-2512 | en | 1,000 | 0.7800 | 0.7604 | 0.0000 |
 | mistralai/ministral-14b-2512 | ko | 1,000 | 0.7440 | 0.7114 | 0.0000 |
 | mistralai/ministral-14b-2512 | overall | 2,000 | 0.7620 | 0.7362 | 0.0000 |
@@ -303,6 +309,7 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 | local/qwen2.5-1.5b-instruct-q8-gguf-pcd | 1,000 | 0.7240 | 0.5610 | 0.3770 | 0.1950 | 0.0810 | 0.3470 |
 | local/qwen3.5-2b-q8-gguf | 1,000 | 0.7050 | 0.5590 | 0.4350 | 0.2130 | 0.0820 | 0.2700 |
 | local/qwen3.5-4b-q4km-gguf | 1,000 | 0.8350 | 0.7760 | 0.6920 | 0.1080 | 0.0570 | 0.1430 |
+| microsoft/microsoft-decision-1 | 1,000 | 0.9270 | 0.9160 | 0.8670 | 0.0530 | 0.0200 | 0.0600 |
 | mistralai/ministral-14b-2512 | 1,000 | 0.8240 | 0.7680 | 0.6740 | 0.1060 | 0.0700 | 0.1500 |
 | mistralai/ministral-3b-2512 | 1,000 | 0.6510 | 0.4300 | 0.3610 | 0.1040 | 0.2450 | 0.2900 |
 | mistralai/ministral-8b-2512 | 1,000 | 0.7630 | 0.6950 | 0.6190 | 0.1190 | 0.1180 | 0.1440 |
@@ -404,6 +411,7 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 | local/qwen2.5-1.5b-instruct-q8-gguf-pcd | — | — | — | — | — | — | — | — |
 | local/qwen3.5-2b-q8-gguf | — | — | — | — | — | — | — | — |
 | local/qwen3.5-4b-q4km-gguf | — | — | — | — | — | — | — | — |
+| microsoft/microsoft-decision-1 | $0.000000 | $0.027402 | $0.040913 | $0.000000 | $0.000000 | $0.068315 | $0.068315 | $0.000000 |
 | mistralai/ministral-14b-2512 | $0.077692 | $0.089998 | $0.011894 | $0.000000 | $0.000000 | $0.179584 | $0.179584 | $0.000000 |
 | mistralai/ministral-3b-2512 | $0.038529 | $0.043329 | $0.005661 | $0.000000 | $0.000000 | $0.087519 | $0.087519 | $0.000000 |
 | mistralai/ministral-8b-2512 | $0.058246 | $0.067533 | $0.008406 | $0.000000 | $0.000000 | $0.134184 | $0.134184 | $0.000000 |
@@ -447,6 +455,7 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 | local/qwen2.5-1.5b-instruct-q8-gguf-pcd | 4,000 | 1,441,986 | 0 | 0 | 0 | 1,441,986 | 0 | 2,000 |
 | local/qwen3.5-2b-q8-gguf | 2,000 | 721,898 | 0 | 0 | 0 | 721,898 | 2,000 | 0 |
 | local/qwen3.5-4b-q4km-gguf | 2,000 | 721,898 | 0 | 0 | 0 | 721,898 | 2,000 | 0 |
+| microsoft/microsoft-decision-1 | 2,800 | 1,626,549 | 0 | 2,800 | 0 | 1,629,349 | 2,800 | 0 |
 | mistralai/ministral-14b-2512 | 1,300 | 1,092,316 | 295,936 | 71,944 | 0 | 1,164,260 | 1,300 | 0 |
 | mistralai/ministral-3b-2512 | 1,300 | 1,092,316 | 318,592 | 69,602 | 0 | 1,161,918 | 1,300 | 0 |
 | mistralai/ministral-8b-2512 | 1,300 | 1,092,316 | 299,392 | 71,698 | 0 | 1,164,014 | 1,300 | 0 |
@@ -551,6 +560,7 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 | local/qwen2.5-1.5b-instruct-q8-gguf-pcd | COMPLETED | 2026-09-17T04:41:18+00:00 | 1.0.0 | 12ce0741fedd | 2,000 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 | local/qwen3.5-2b-q8-gguf | COMPLETED | 2026-09-17T04:41:25+00:00 | 1.0.0 | 12ce0741fedd | 2,000 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 | local/qwen3.5-4b-q4km-gguf | COMPLETED | 2026-09-17T05:31:30+00:00 | 1.0.0 | a05631eb2e57 | 2,000 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
+| microsoft/microsoft-decision-1 | COMPLETED | 2026-10-10T14:59:45+00:00 | 1.0.0 | 31ace82a3b53 | 2,800 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 | mistralai/ministral-14b-2512 | COMPLETED | 2026-09-16T03:10:43+00:00 | 1.0.0 | — | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 | mistralai/ministral-3b-2512 | COMPLETED | 2026-09-16T03:17:57+00:00 | 1.0.0 | — | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 | mistralai/ministral-8b-2512 | COMPLETED | 2026-09-16T03:15:04+00:00 | 1.0.0 | — | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
@@ -564,4 +574,8 @@ MASSIVE 음성비서 발화를 60개 인텐트 중 하나로 분류시킵니다.
 | qwen/qwen3.7-flash | COMPLETED | 2026-09-16T03:31:25+00:00 | 1.0.0 | — | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 | qwen/qwen3.8-flash | COMPLETED | 2026-09-16T03:26:21+00:00 | 1.0.0 | — | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
 | z-ai/glm-5.3-flash | COMPLETED | 2026-09-16T04:41:39+00:00 | 1.0.0 | 8d709c8d679a | 3,200 | 0135c4f4499e | 21debf696ed0 | b49d914db700 | 1bebd7a4e6ca |
+
+## 비고
+
+- **microsoft/microsoft-decision-1**: summarization: decision models choose among fixed options and cannot generate a summary
 

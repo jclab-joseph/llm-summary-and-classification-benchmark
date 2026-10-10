@@ -145,6 +145,13 @@ class BenchmarkRunner:
             for name in [b for b in selected if b != "classification"]:
                 local_only_skips[name] = "local engines run the classification benchmark only"
             selected = [b for b in selected if b == "classification"]
+        elif model.api == "decisions" and "summarization" in selected:
+            # A decision model returns a probability per fixed option and never
+            # writes text, so there is no summary to score.
+            local_only_skips["summarization"] = (
+                "decision models choose among fixed options and cannot generate a summary"
+            )
+            selected = [b for b in selected if b != "summarization"]
 
         manifests = self.manifests()
         alias_resolution = (
@@ -249,6 +256,16 @@ class BenchmarkRunner:
         for every endpoint.
         """
         generation = self.cfg.benchmark.generation
+        if task.decision is not None:
+            # Sampling, reasoning and output-length parameters have no meaning for
+            # a model that never generates, and the Decisions API takes none.
+            return GenerationRequest(
+                model=model.model_id,
+                messages=[],
+                max_tokens=task.max_output_tokens,
+                provider=model.routing.to_request_payload(),
+                decision=task.decision,
+            )
         return GenerationRequest(
             model=model.model_id,
             messages=task.prompt.messages,
@@ -674,6 +691,7 @@ class BenchmarkRunner:
             selected_benchmarks = list(benchmarks) if benchmarks else list(ALL_BENCHMARKS)
             needs_response_format = (
                 model.provider == "openrouter"
+                and model.api == "chat"
                 and "classification" in selected_benchmarks
                 and uses_structured_output(self.cfg)
             )

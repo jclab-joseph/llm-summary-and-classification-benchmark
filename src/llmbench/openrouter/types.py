@@ -141,7 +141,7 @@ class AttemptRecord:
 
 @dataclass(slots=True)
 class GenerationRequest:
-    """One chat-completions request. Provider-agnostic fields only."""
+    """One chat-completions (or Decisions) request. Provider-agnostic fields only."""
 
     model: str
     messages: list[dict[str, str]]
@@ -160,8 +160,16 @@ class GenerationRequest:
     # Answer set for backends that constrain decoding to it. OpenRouter expresses
     # the same thing through `response_format`, so this never reaches the wire.
     candidates: list[str] | None = None
+    # `state` + `questions` for the Decisions API. When set, the request goes to
+    # /alpha/decisions and none of the chat-completions fields apply.
+    decision: dict[str, Any] | None = None
 
     def to_payload(self) -> dict[str, Any]:
+        if self.decision is not None:
+            payload = {"model": self.model, **self.decision}
+            if self.provider is not None:
+                payload["provider"] = self.provider
+            return payload
         payload: dict[str, Any] = {
             "model": self.model,
             "messages": self.messages,

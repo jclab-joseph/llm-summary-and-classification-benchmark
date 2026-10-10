@@ -20,6 +20,7 @@ from llmbench.metrics.classification import (
     parse_single_label,
 )
 from llmbench.prompts.registry import (
+    classification_decision,
     classification_json_schema,
     classification_prompt,
     classification_single_prompt,
@@ -30,6 +31,9 @@ __all__ = ["build_classification_tasks", "score_classification", "batch_records"
 
 
 LOCAL_MODE = "local_constrained"
+DECISIONS_MODE = "decisions"
+#: Modes that send one utterance per request instead of a batch of 20.
+SINGLE_UTTERANCE_MODES = (LOCAL_MODE, DECISIONS_MODE)
 
 
 def uses_structured_output(cfg: AppConfig) -> bool:
@@ -38,13 +42,16 @@ def uses_structured_output(cfg: AppConfig) -> bool:
 
 
 def classification_output_mode(cfg: AppConfig, model: ModelConfig | None = None) -> str:
-    """How the answer is produced: `text`, `json_schema` or `local_constrained`.
+    """How the answer is produced: `text`, `json_schema`, `local_constrained` or `decisions`.
 
-    A local engine constrains decoding itself and answers one utterance at a
-    time, so it does not use either hosted mode.
+    A local engine constrains decoding itself and a Decisions API model picks
+    from the options it is handed; both answer one utterance at a time, so
+    neither uses the two hosted chat modes.
     """
     if model is not None and model.provider == "local":
         return LOCAL_MODE
+    if model is not None and model.api == "decisions":
+        return DECISIONS_MODE
     return cfg.benchmark.structured_output.classification_mode
 
 
@@ -85,6 +92,7 @@ def build_classification_tasks(
     mode = classification_output_mode(cfg, model)
     structured = mode == "json_schema"
     local = mode == LOCAL_MODE
+    single = mode in SINGLE_UTTERANCE_MODES
     schema_version = structured_output_version(cfg, model)
     # The weights, the engine and its decoding settings all change the answer,
     # so they belong in the cache key exactly like a routing change does.
@@ -95,16 +103,23 @@ def build_classification_tasks(
         if wanted and language not in wanted:
             continue
         records = manifest.by_language(language)
-        if local:
+        if single:
             # One utterance per prompt: batching exists to save API calls, and a
             # local engine has none to save. The label list stays in the system
             # message so the engine reuses one prefill across the whole run.
+            # A decision model takes one state per request, and its questions are
+            # answered independently, so a batch would only blur which utterance
+            # each question is about.
             for record in records:
-                prompt = (
-                    classification_state_prompt(language, record.payload["text"])
-                    if model.prompt_style == "state"
-                    else classification_single_prompt(language, record.payload["text"], labels)
-                )
+                decision = None
+                if mode == DECISIONS_MODE:
+                    prompt, decision = classification_decision(
+                        language, record.payload["text"], labels
+                    )
+                elif model.prompt_style == "state":
+                    prompt = classification_state_prompt(language, record.payload["text"])
+                else:
+                    prompt = classification_single_prompt(language, record.payload["text"], labels)
                 tasks.append(
                     make_task(
                         cfg=cfg,
@@ -118,11 +133,12 @@ def build_classification_tasks(
                         split=manifest.meta.split,
                         sample_content_hash=record.source_hash,
                         prompt=prompt,
-                        answer_tokens=model.runtime.max_label_tokens,
+                        answer_tokens=model.runtime.max_label_tokens if local else answer_tokens,
                         structured_output_version=schema_version,
                         extra=extra,
                         alias_resolution=alias_resolution,
                         candidates=labels,
+                        decision=decision,
                         meta={"batch_size": 1, "label_count": len(labels), "output_mode": mode},
                     )
                 )
@@ -175,7 +191,7 @@ def score_classification(
     wanted = set(languages) if languages else None
     mode = classification_output_mode(cfg, model)
     structured = mode == "json_schema"
-    local = mode == LOCAL_MODE
+    single = mode in SINGLE_UTTERANCE_MODES
     # The parser differs per mode, so the evaluator identity has to differ too --
     # otherwise a cached text-mode parse would be reused for a JSON reply.
     evaluator = replace(
@@ -189,7 +205,7 @@ def score_classification(
             continue
         records = manifest.by_language(language)
         rows: list[dict[str, Any]] = []
-        if local:
+        if single:
             for record in records:
                 task_id = f"massive-single:{language}:{record.payload['semantic_id']}"
                 result = results.get(task_id)
@@ -289,7 +305,7 @@ def score_classification(
         "manifest_hash": manifest.meta.manifest_hash,
         "dataset_revision": manifest.meta.dataset_revision,
         "label_space_size": len(labels),
-        "batch_size": 1 if local else bench.batch_size,
+        "batch_size": 1 if single else bench.batch_size,
         "per_language": per_language,
         "overall": overall,
         "cross_lingual": consistency,

@@ -25,7 +25,13 @@ MOCK_PRICING = {
     "openai/gpt-5.6-luna": {"prompt": "0.0000002", "completion": "0.0000012"},
     "openai/gpt-5.6-sol": {"prompt": "0.00000125", "completion": "0.00001"},
     "mistralai/ministral-3b-2512": {"prompt": "0.0000001", "completion": "0.0000001"},
+    "microsoft/microsoft-decision-1": {"prompt": "0.000000042", "completion": "0"},
 }
+
+# Served only by the Decisions API, and -- like the real listing -- only
+# returned by /models when every output modality is requested.
+DECISION_MODELS = {"microsoft/microsoft-decision-1"}
+MOCK_DECISION_INPUT_RATE = 0.042 / 1_000_000
 
 _FULL_PARAMETERS = [
     "max_tokens", "temperature", "top_p", "seed", "stop",
@@ -40,6 +46,7 @@ MOCK_SUPPORTED_PARAMETERS = {
     "openai/gpt-5.6-luna": _NO_SAMPLING,
     "openai/gpt-5.6-sol": _NO_SAMPLING,
     "mistralai/ministral-3b-2512": ["max_tokens", "temperature", "top_p", "seed", "stop", "response_format"],
+    "microsoft/microsoft-decision-1": [],
 }
 
 
@@ -72,6 +79,7 @@ class MockOpenRouter:
     fail_cost: float | None = None
     error_for_sample: dict[str, int] = field(default_factory=dict)
     chat_calls: int = 0
+    decision_calls: int = 0
     models_calls: int = 0
     requests: list[dict[str, Any]] = field(default_factory=list)
     total_cost: float = 0.0
@@ -82,6 +90,7 @@ class MockOpenRouter:
 
     def reset_counters(self) -> None:
         self.chat_calls = 0
+        self.decision_calls = 0
         self.models_calls = 0
         self.requests.clear()
 
@@ -89,6 +98,7 @@ class MockOpenRouter:
     def handle(self, request: httpx.Request) -> httpx.Response:
         if request.url.path.endswith("/models"):
             self.models_calls += 1
+            all_modalities = request.url.params.get("output_modalities") == "all"
             return httpx.Response(200, json={"data": [
                 {
                     "id": model_id,
@@ -98,7 +108,11 @@ class MockOpenRouter:
                     "supported_parameters": MOCK_SUPPORTED_PARAMETERS.get(model_id, _FULL_PARAMETERS),
                 }
                 for model_id, pricing in MOCK_PRICING.items()
+                if all_modalities or model_id not in DECISION_MODELS
             ]})
+
+        if request.url.path.endswith("/api/alpha/decisions"):
+            return self._decide(request)
 
         if not request.url.path.endswith("/chat/completions"):
             return httpx.Response(404, json={"error": {"message": "not found", "code": 404}})
@@ -215,6 +229,46 @@ class MockOpenRouter:
         )
 
     # ------------------------------------------------------------------ #
+    def _decide(self, request: httpx.Request) -> httpx.Response:
+        payload = json.loads(request.content.decode("utf-8"))
+        self.requests.append(payload)
+        self.decision_calls += 1
+
+        if payload.get("model") not in DECISION_MODELS:
+            return httpx.Response(400, json={"error": {"message": "not a decision model", "code": 400}})
+        chat_fields = sorted(
+            k for k in ("messages", "max_tokens", "temperature", "top_p", "seed", "reasoning") if k in payload
+        )
+        if chat_fields:
+            return httpx.Response(
+                400, json={"error": {"message": f"unexpected fields: {chat_fields}", "code": 400}}
+            )
+
+        state = json.dumps(payload["state"], ensure_ascii=False, sort_keys=True)
+        answers = {}
+        for question_id, question in payload["questions"].items():
+            options = sorted(question["criteria"])
+            choice = options[_stable_int(state) % len(options)]
+            answers[question_id] = {
+                "type": "choice",
+                "choice": choice,
+                "probabilities": {o: (0.9 if o == choice else 0.1 / (len(options) - 1)) for o in options},
+                "confidence": 0.8,
+            }
+        input_tokens = _approx_tokens(state)
+        cost = round(input_tokens * MOCK_DECISION_INPUT_RATE, 12)
+        self.total_cost += cost
+        return httpx.Response(
+            200,
+            json={
+                "id": f"gen-dec-{_stable_int(state):08x}",
+                "model": f"{payload['model']}-20261009",
+                "provider": "Azure",
+                "answers": answers,
+                "usage": {"input_tokens": input_tokens, "output_tokens": 1, "cost": cost},
+            },
+        )
+
     def _answer(self, user: str, payload: dict[str, Any]) -> str:
         if "SUPPORTED" in user and "HALLUCINATED" in user:
             return "SUPPORTED" if _stable_int(user) % 2 == 0 else "HALLUCINATED"

@@ -8,6 +8,7 @@ single composite score.
 
 | Model | API | Input $/M | Output $/M | Summary EN | Summary KO | Halu EN F1 | Halu KO F1 | Classification EN | Classification KO | EN-KO Consistency | Input Tokens | Output Tokens | OpenRouter Cost | Judge Cost |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| microsoft/microsoft-decision-1 | openrouter | 0.0420 | 0.0000 | — | — | 0.7463 | 0.5652 | 0.9200 | 0.8870 | 0.9270 | 1,626,549 | 2,800 | 0.068315 | 0.000000 |
 | google/gemini-3.1-flash-lite | openrouter | 0.2500 | 1.5000 | 0.1800 | 0.2210 | 0.7183 | 0.6113 | 0.8910 | 0.8700 | 0.9330 | 1,098,022 | 55,664 | 0.358001 | 0.000000 |
 | qwen/qwen3.8-flash | openrouter | 0.1500 | 0.4700 | 0.1621 | 0.2284 | 0.7597 | 0.5623 | 0.8820 | 0.8460 | 0.9100 | 1,061,596 | 52,179 | 0.147926 | 0.000000 |
 | openai/gpt-6-luna | openrouter | 0.1000 | 0.5000 | 0.1527 | 0.2172 | 0.7273 | 0.6174 | 0.8630 | 0.8390 | 0.9020 | 1,106,945 | 59,964 | 0.110488 | 0.000000 |

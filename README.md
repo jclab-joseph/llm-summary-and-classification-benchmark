@@ -461,6 +461,33 @@ benchmark report
 vendor별 차이(thinking 모드, 출력 상한, 라우팅)는 모델 항목의 설정으로 표현하고,
 벤치마크 코드에서 분기하지 않습니다.
 
+### Decisions API 모델 (텍스트를 생성하지 않는 모델)
+
+`microsoft/microsoft-decision-1` 처럼 OpenRouter 의 output modality 가 `decisions` 인
+모델은 텍스트를 생성하지 않습니다. `/api/alpha/decisions` 로 *state* 와 *typed question* 을
+보내면, 미리 정한 선택지마다 확률을 돌려줍니다. 앞서 설명한 [Laya](#laya-생성하지-않는-결정-모델)
+와 같은 종류를 호스팅으로 쓰는 셈입니다. 모델 항목에 `api: decisions` 한 줄을 넣으면 됩니다.
+
+```yaml
+  - model_id: microsoft/microsoft-decision-1
+    api: decisions          # /chat/completions 대신 /alpha/decisions
+    parameters:             # OpenRouter 가 지원 파라미터를 하나도 내놓지 않으므로 모두 끔
+      temperature: false
+      ...
+```
+
+- **요약은 `SKIPPED`** 입니다. 쓸 텍스트가 없으니 채점할 요약도 없습니다.
+- **환각 탐지**는 `SUPPORTED` / `HALLUCINATED` 두 선택지의 `choice` 질문입니다. 예/아니오
+  확률을 주는 `noul` 대신 `choice` 를 쓴 이유는, 모델이 레이블을 직접 고르게 해서 우리가
+  정한 임계값이 점수에 끼어들지 않게 하기 위해서입니다.
+- **분류**는 발화 1건당 요청 1개이고, 60개 인텐트 전체를 선택지로 넘깁니다. 선택지 설명은
+  인텐트 이름 그대로입니다(생성형 모델이 받는 정보와 같음). 배치가 없으므로 호스팅 `text`
+  모드와 조건이 다르며, `output_mode: decisions` 로 기록됩니다.
+- **비용은 입력에만 붙습니다.** 응답은 출력 1토큰으로 집계됩니다. 다만 분류 요청마다 60개
+  선택지가 같이 가므로, 입력 토큰은 발화 길이보다 훨씬 큽니다.
+- `/models` 기본 목록에는 텍스트 출력 모델만 나오므로, 가격과 메타데이터는
+  `?output_modalities=all` 로 조회합니다.
+
 ### 가격 갱신
 
 ```bash

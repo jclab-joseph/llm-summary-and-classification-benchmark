@@ -19,7 +19,11 @@ __all__ = [
     "RenderedPrompt",
     "summarization_prompt",
     "hallucination_prompt",
+    "hallucination_decision",
+    "decision_request",
+    "DECISION_QUESTION_ID",
     "classification_prompt",
+    "classification_decision",
     "classification_single_prompt",
     "classification_state_prompt",
     "classification_json_schema",
@@ -39,6 +43,10 @@ PROMPT_VERSIONS = {
     # Instruction + raw utterance, for models that take a state and typed
     # questions rather than a chat prompt.
     "classification_state": "cls-state-1",
+    # The hallucination question for a Decisions API model: a typed `choice`
+    # between the two labels. Classification reuses `classification_state`,
+    # with the intents as the question's options.
+    "hallucination_decision": "halu-decision-1",
     "judge": "judge-1",
 }
 
@@ -144,6 +152,71 @@ def hallucination_prompt(language: str, source: str, candidate: str) -> Rendered
         user=_HALU_USER[lang].format(source=source, candidate=candidate),
         template_version=PROMPT_VERSIONS["hallucination"],
     )
+
+
+# The spec's question and its two labels, restated as a typed question. Each
+# option's description says what the label means, which is all the generative
+# models are told about the labels too.
+_HALU_DECISION = {
+    "en": {
+        "instructions": (
+            "Is every factual claim in the candidate summary supported by the source document?"
+        ),
+        "criteria": {
+            "SUPPORTED": "Every factual claim in the candidate summary is supported by the source document.",
+            "HALLUCINATED": (
+                "The candidate summary makes at least one factual claim that the source "
+                "document does not support."
+            ),
+        },
+    },
+    "ko": {
+        "instructions": "후보 요약문의 모든 사실적 주장이 원문에 의해 뒷받침되는가?",
+        "criteria": {
+            "SUPPORTED": "후보 요약문의 모든 사실적 주장이 원문에 의해 뒷받침된다.",
+            "HALLUCINATED": "후보 요약문에 원문이 뒷받침하지 않는 사실적 주장이 하나 이상 있다.",
+        },
+    },
+}
+
+#: The question id every decision request answers under.
+DECISION_QUESTION_ID = "answer"
+
+
+def decision_request(
+    instructions: str, criteria: dict[str, str], state: dict[str, str]
+) -> dict[str, Any]:
+    """Decisions API body: one `choice` question over a fixed option set."""
+    return {
+        "state": state,
+        "questions": {
+            DECISION_QUESTION_ID: {
+                "type": "choice",
+                "instructions": instructions,
+                "criteria": criteria,
+            }
+        },
+    }
+
+
+def hallucination_decision(
+    language: str, source: str, candidate: str
+) -> tuple[RenderedPrompt, dict[str, Any]]:
+    """The hallucination question for a model that answers through the Decisions API.
+
+    It is a `choice` between the two labels rather than a yes/no `noul`, so the
+    model picks the label itself and no threshold of ours sits between its
+    probabilities and the score.
+    """
+    lang = language if language in _HALU_DECISION else "en"
+    spec = _HALU_DECISION[lang]
+    state = {"source_document": source, "candidate_summary": candidate}
+    prompt = RenderedPrompt(
+        system=spec["instructions"],
+        user=f"{source}\n\n{candidate}",
+        template_version=PROMPT_VERSIONS["hallucination_decision"],
+    )
+    return prompt, decision_request(spec["instructions"], spec["criteria"], state)
 
 
 # --------------------------------------------------------------------------- #
@@ -316,6 +389,19 @@ def classification_state_prompt(language: str, text: str) -> RenderedPrompt:
         user=text,
         template_version=PROMPT_VERSIONS["classification_state"],
     )
+
+
+def classification_decision(
+    language: str, text: str, label_space: Sequence[str]
+) -> tuple[RenderedPrompt, dict[str, Any]]:
+    """One utterance as a `choice` question over the whole label space.
+
+    The label name is its own description, exactly as for the local decision
+    model: it is all the generative models get too.
+    """
+    prompt = classification_state_prompt(language, text)
+    criteria = {label: label.replace("_", " ") for label in label_space}
+    return prompt, decision_request(prompt.system, criteria, {"utterance": text})
 
 
 def classification_prompt(

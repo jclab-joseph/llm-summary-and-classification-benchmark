@@ -14,7 +14,7 @@ from llmbench.config.loader import AppConfig
 from llmbench.config.schema import ModelConfig
 from llmbench.core.text import estimate_tokens
 from llmbench.cache.keys import build_inference_key
-from llmbench.core.canonical import hash_obj
+from llmbench.core.canonical import canonical_json, hash_obj
 from llmbench.prompts.registry import RenderedPrompt
 
 __all__ = ["Task", "TaskGroup", "make_task"]
@@ -41,6 +41,8 @@ class Task:
     response_format: dict[str, Any] | None = None
     # Answer set for a backend that constrains decoding to it (local engines).
     candidates: list[str] | None = None
+    # Decisions API body (`state` + `questions`) for a non-generative model.
+    decision: dict[str, Any] | None = None
     meta: dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -76,6 +78,7 @@ def make_task(
     answer_tokens: int,
     response_format: dict[str, Any] | None = None,
     candidates: list[str] | None = None,
+    decision: dict[str, Any] | None = None,
     structured_output_version: str | None = None,
     extra: dict[str, Any] | None = None,
     alias_resolution: str | None = None,
@@ -87,6 +90,9 @@ def make_task(
     between benchmarks.
     """
     generation = cfg.benchmark.generation
+    if decision is not None:
+        # A decision is reported as a single output token, whatever the label.
+        answer_tokens = 1
     # A thinking model needs room for reasoning tokens on top of the answer.
     max_output_tokens = model.output_token_budget(answer_tokens)
     # Parameters the model does not accept are omitted from the request, so they
@@ -123,6 +129,9 @@ def make_task(
         extra={
             **(extra or {}),
             **({"response_format_hash": hash_obj(response_format)} if response_format else {}),
+            # Likewise the question and its options are the whole request for a
+            # decision model.
+            **({"decision_hash": hash_obj(decision)} if decision else {}),
         },
         truncation_policy_version=cfg.benchmark.truncation.version,
         generation_config_version=generation.version,
@@ -141,9 +150,17 @@ def make_task(
         max_output_tokens=max_output_tokens,
         cache_key=cache_key,
         key_material=material.to_dict(),
-        est_input_tokens=estimate_tokens(prompt.system) + estimate_tokens(prompt.user) + 8,
+        # A decision request carries its options as well as the state -- for
+        # classification that is all 60 intents, every time.
+        est_input_tokens=(
+            estimate_tokens(canonical_json(decision))
+            if decision is not None
+            else estimate_tokens(prompt.system) + estimate_tokens(prompt.user)
+        )
+        + 8,
         est_output_tokens=model.estimated_output_tokens(answer_tokens),
         response_format=response_format,
         candidates=candidates,
+        decision=decision,
         meta=meta or {},
     )

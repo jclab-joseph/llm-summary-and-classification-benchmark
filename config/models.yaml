@@ -43,6 +43,33 @@ defaults:
     quantizations: null
 
 models:
+  - model_id: microsoft/microsoft-decision-1
+    display_name: Microsoft Decision 1
+    vendor: microsoft
+    enabled: true
+    # Not a chat model: it is served by OpenRouter's Decisions API, takes a
+    # state and typed questions, and returns a probability for each fixed
+    # option. It runs hallucination and classification as `choice` questions
+    # over their label sets; summarization is skipped, since it writes no text.
+    # There is no thinking to disable and no sampling to set, and OpenRouter
+    # lists no supported_parameters for it, so every flag is off.
+    api: decisions
+    max_output_tokens: 1024
+    reasoning:
+      enabled: false
+    parameters:
+      temperature: false
+      top_p: false
+      seed: false
+      stop: false
+      reasoning: false
+      response_format: false
+      structured_outputs: false
+    routing:
+      mode: default
+      provider_order: null
+      allow_fallbacks: true
+
   - model_id: openai/gpt-6-luna
     display_name: GPT-6 Luna
     vendor: openai
